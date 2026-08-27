@@ -5,6 +5,9 @@ let cache = [];
 let loaded = false;
 let realtimeChannel = null;
 
+let volunteersCache = null;
+let volunteersLoaded = false;
+
 function notify() {
   for (const fn of subscribers) {
     try { fn(cache); } catch (_e) { /* subscriber must handle */ }
@@ -159,6 +162,18 @@ export const taskService = {
       : cache;
     return assigned.filter((t) => ['PENDING', 'ACCEPTED', 'IN_PROGRESS'].includes(t.status));
   },
+  listByAssignee: async (profileId) => {
+    await ensure();
+    return cache.filter((t) => t.assigned_to === profileId);
+  },
+  decline: async (id) => {
+    const patch = { assigned_to: null, assigned_to_name: null, status: 'PENDING' };
+    const { data, error } = await supabase.from('tasks').update(patch).eq('id', id).select('*').single();
+    if (error) { console.error('[taskService] decline error:', error); return null; }
+    cache = cache.map((t) => (t.id === id ? data : t));
+    notify();
+    return data;
+  },
   createFromIncident: async (incident, opts = {}) => {
     const loc = opts.location || { latitude: incident.latitude, longitude: incident.longitude };
     return taskService.create({
@@ -183,4 +198,31 @@ export const taskService = {
   },
   start: async (id) => taskService.updateStatus(id, 'IN_PROGRESS'),
   complete: async (id) => taskService.updateStatus(id, 'COMPLETED'),
+
+  // Volunteer directory
+  listVolunteers: async () => {
+    if (volunteersLoaded && volunteersCache) return volunteersCache;
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, phone')
+      .eq('role', 'VOLUNTEER');
+    if (error) { console.error('[taskService] listVolunteers error:', error); volunteersCache = []; volunteersLoaded = true; return volunteersCache; }
+    volunteersCache = data || [];
+    volunteersLoaded = true;
+    return volunteersCache;
+  },
+  getVolunteerLocations: async () => {
+    const { data, error } = await supabase
+      .from('location_pings')
+      .select('user_id, latitude, longitude')
+      .eq('is_test_data', true);
+    if (error) { console.error('[taskService] getVolunteerLocations error:', error); return []; }
+    const seen = new Map();
+    for (const row of data || []) {
+      if (row.user_id && !seen.has(row.user_id)) {
+        seen.set(row.user_id, { latitude: Number(row.latitude), longitude: Number(row.longitude) });
+      }
+    }
+    return [...seen.entries()].map(([userId, loc]) => ({ userId, ...loc }));
+  },
 };

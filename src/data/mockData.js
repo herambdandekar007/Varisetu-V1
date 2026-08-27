@@ -44,6 +44,30 @@ export const notifications = [
   { id: 3, title: 'Light rain expected', text: 'Carry a cover between 15:00 and 16:30.', time: '34 min ago', type: 'weather' },
 ];
 
+export const notificationAudienceByType = {
+  route: ['pilgrim'],
+  water: ['pilgrim'],
+  weather: ['pilgrim'],
+  'crowd-high': ['pilgrim', 'police', 'municipality'],
+  'crowd-severe': ['pilgrim', 'police', 'municipality'],
+  'crowd-recovery': ['pilgrim', 'police', 'municipality'],
+  'route-change': ['pilgrim', 'volunteer', 'police'],
+  'task-assign': ['volunteer'],
+  sos: ['police', 'medical'],
+  incident: ['police', 'medical', 'municipality'],
+  'alert-critical': ['pilgrim', 'volunteer', 'police'],
+  'alert-high': ['pilgrim', 'volunteer', 'police'],
+  'alert-medium': ['pilgrim', 'volunteer', 'police'],
+  'alert-low': ['pilgrim', 'volunteer', 'police'],
+  'camp-stock': ['medical', 'police', 'municipality'],
+};
+
+export const isNotificationForRole = (notification, roleId) => {
+  const audience = notificationAudienceByType[notification.type];
+  if (!audience) return true;
+  return audience.includes(roleId);
+};
+
 export const zones = [
   { name: 'Alandi', density: 'Low', people: '3,200', risk: 15, color: '#008C45', detail: 'Departure point, low congregation', areaRisk: 'low' },
   { name: 'Loni Market', density: 'High', people: '14,820', risk: 78, color: '#E53935', detail: 'Narrow road, procession crossing at 10:40', areaRisk: 'severe' },

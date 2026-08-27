@@ -26,7 +26,7 @@ export default function UnauthorizedPage() {
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Button variant="outline" onClick={() => navigate('/')}>Go Home</Button>
-          <Button onClick={() => navigate(getHomeRoute(typeof role === 'string' ? role : role?.id))}>Go To My Dashboard</Button>
+          <Button onClick={() => navigate(getHomeRoute(role))}>Go To My Dashboard</Button>
         </div>
       </motion.div>
     </div>

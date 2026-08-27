@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
@@ -6,7 +6,9 @@ import PageHeader from '../../components/common/PageHeader';
 import MetricCard from '../../components/cards/MetricCard';
 import Button from '../../components/common/Button';
 import SectionTitle from '../../components/common/SectionTitle';
-import { HeartIcon, UserGroupIcon, TruckIcon, BuildingOffice2Icon, BeakerIcon } from '@heroicons/react/24/outline';
+import Badge from '../../components/common/Badge';
+import { healthService } from '../../services/healthService';
+import { HeartIcon, UserGroupIcon, TruckIcon, BuildingOffice2Icon, BeakerIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 
 const severityColor = (s) => {
   if (s === 'CRITICAL') return 'red';
@@ -31,6 +33,21 @@ function timeAgo(dateStr) {
 export default function MedicalDashboard() {
   const { t } = useTranslation();
   const { incidents, camps } = useApp();
+  const [corridorHealth, setCorridorHealth] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const rows = await healthService.getCorridorHealth();
+      if (active) setCorridorHealth(rows);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 60000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const medicalIncidents = useMemo(() => incidents.filter((i) => i.type === 'MEDICAL'), [incidents]);
   const doctors = useMemo(() => camps.filter((c) => c.type === 'DOCTOR'), [camps]);
@@ -104,6 +121,37 @@ export default function MedicalDashboard() {
           )}
         </motion.div>
       </div>
+
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mt-6 surface p-5">
+        <SectionTitle
+          title={t('Corridor Health Watch', 'Corridor Health Watch')}
+          detail={t('Recent pilgrim health snapshots across zones', 'Recent pilgrim health snapshots across zones · rule-based guidance, not diagnosis')}
+          action={corridorHealth.length > 0 && <Badge tone={corridorHealth.some((r) => r.high_risk_count > 0) ? 'red' : 'green'} dot>{corridorHealth.some((r) => r.high_risk_count > 0) ? 'Attention' : 'Monitoring'}</Badge>}
+        />
+        {corridorHealth.length === 0 ? (
+          <p className="py-6 text-center text-sm text-slate-400">{t('No health snapshots yet.', 'No health snapshots yet — guidance appears as pilgrims walk.')}</p>
+        ) : (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {corridorHealth.map((r) => (
+              <div key={r.zone_name} className="rounded-2xl border border-slate-100 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-ink">{r.zone_name}</p>
+                  <ShieldExclamationIcon className="h-4 w-4 text-slate-300" />
+                </div>
+                <p className="mt-2 text-2xl font-bold text-ink">
+                  {r.avg_risk}<span className="text-xs font-semibold text-slate-400">/100 avg</span>
+                </p>
+                <div className="mt-2 flex items-center justify-between text-[11px] font-bold">
+                  <span className="text-slate-400">{r.sample_count} snapshot{r.sample_count === 1 ? '' : 's'}</span>
+                  <span className={r.high_risk_count > 0 ? 'text-red-600' : 'text-emerald-600'}>
+                    {r.high_risk_count} high risk
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </motion.div>
     </>
   );
 }

@@ -12,7 +12,7 @@ export default function RiskZonesPage() {
   const { crowdCells } = useApp();
 
   const highRiskZones = useMemo(
-    () => crowdCells.filter((z) => (Number(z.risk_score) || 0) > 50).sort((a, b) => (Number(b.risk_score) || 0) - (Number(a.risk_score) || 0)),
+    () => crowdCells.filter((z) => (Number(z.riskScore) || 0) > 50).sort((a, b) => (Number(b.riskScore) || 0) - (Number(a.riskScore) || 0)),
     [crowdCells],
   );
 
@@ -39,10 +39,10 @@ export default function RiskZonesPage() {
                 </div>
                 <Badge tone={densityBadge[z.density] || 'slate'} dot>{(z.density || 'LOW').replace('_', ' ')}</Badge>
               </div>
-              <p className="mt-3 text-sm font-bold text-ink">{z.name}</p>
+              <p className="mt-3 text-sm font-bold text-ink">{z.zoneName}</p>
               <div className="mt-2 flex items-center gap-3 text-xs text-slate-400">
-                <span>{t('police.riskScore', 'Risk')}: <strong className="text-ink">{z.risk_score}</strong></span>
-                <span>{t('police.people', 'People')}: <strong className="text-ink">{Number(z.people_count || 0).toLocaleString()}</strong></span>
+                <span>{t('police.riskScore', 'Risk')}: <strong className="text-ink">{z.riskScore}</strong></span>
+                <span>{t('police.people', 'People')}: <strong className="text-ink">{Number(z.peopleCount || 0).toLocaleString()}</strong></span>
               </div>
             </div>
           ))}

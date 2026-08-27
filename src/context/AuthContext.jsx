@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
+import { locationService } from '../services/locationService';
 
 const DB_ROLE_TO_UI_ROLE = {
   PILGRIM: 'pilgrim',
@@ -64,6 +65,7 @@ export function AuthProvider({ children }) {
       const u = session?.user ?? null;
       setUser(u);
       setLoading(false);
+      locationService.bindUser(u?.id ?? null);
       if (u) fetchAndSetProfile(u.id, setProfile, setRole);
     });
 
@@ -73,6 +75,7 @@ export function AuthProvider({ children }) {
       if (!active) return;
       const u = session?.user ?? null;
       setUser(u);
+      locationService.bindUser(u?.id ?? null);
       if (u) {
         if (event !== 'TOKEN_REFRESHED') {
           fetchAndSetProfile(u.id, setProfile, setRole);
@@ -108,6 +111,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    locationService.bindUser(null);
     setProfile(null);
     setRole(null);
   };
@@ -127,8 +131,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const selectRole = async (roleData) => {
-    const roleId = typeof roleData === 'string' ? roleData : roleData?.id;
+  const selectRole = async (roleId) => {
     setRole(roleId);
     if (user?.id && roleId) {
       const dbRole = UI_ROLE_TO_DB_ROLE[roleId] || roleId || 'PILGRIM';

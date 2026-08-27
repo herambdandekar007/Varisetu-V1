@@ -188,6 +188,67 @@ export const crowdService = {
     return ok;
   },
 
+  // Inject synthetic pings into a zone's grid cell so the SAME DB aggregation
+  // pipeline (aggregate_cell_counts → crowd_zones updates) moves live numbers.
+  // Developer Mode uses this instead of locally overriding displayed values.
+  burstSimulationPings: async ({ zoneId = null, count = 20, label = 'dev' }) => {
+    await ensure();
+    const zone = zoneId
+      ? cache.find((z) => z.id === zoneId || z.name === zoneId)
+      : null;
+    if (!zone && zoneId) return { inserted: 0, cell: null };
+
+    // Prefer the zone's grid cell center; fall back to the zone center
+    let lat = Number(zone?.center_latitude) || null;
+    let lng = Number(zone?.center_longitude) || null;
+    let cellId = null;
+    if (zone?.id) {
+      const { data: cell, error } = await supabase
+        .from('grid_cells')
+        .select('id, center_lat, center_lng')
+        .eq('zone_id', zone.id)
+        .limit(1)
+        .maybeSingle();
+      if (!error && cell) {
+        cellId = cell.id;
+        if (cell.center_lat != null) lat = Number(cell.center_lat);
+        if (cell.center_lng != null) lng = Number(cell.center_lng);
+      }
+    }
+    if (lat == null || lng == null) return { inserted: 0, cell: null };
+
+    const safe = Math.max(1, Math.min(500, Math.round(count) || 0));
+    const stamp = Date.now();
+    const jitter = () => ({ dLat: (Math.random() - 0.5) * 0.004, dLng: (Math.random() - 0.5) * 0.004 });
+    const rows = [];
+    for (let i = 0; i < safe; i += 1) {
+      const { dLat, dLng } = jitter();
+      rows.push({
+        user_id: null,
+        sim_user_id: `sim-${label}-${stamp}-${i}`,
+        latitude: Math.round((lat + dLat) * 1e6) / 1e6,
+        longitude: Math.round((lng + dLng) * 1e6) / 1e6,
+        accuracy: Math.round(12 + Math.random() * 30),
+        heading_deg: Math.round(100 + Math.random() * 20),
+        recorded_at: new Date().toISOString(),
+        is_test_data: true,
+      });
+    }
+
+    let inserted = 0;
+    // Batch inserts in chunks of 100 to keep the request small
+    for (let i = 0; i < rows.length; i += 100) {
+      const chunk = rows.slice(i, i + 100);
+      const { error } = await supabase.from('location_pings').insert(chunk);
+      if (error) {
+        console.error('[crowdService] burstSimulationPings error:', error);
+        break;
+      }
+      inserted += chunk.length;
+    }
+    return { inserted, cell: cellId, lat, lng, zoneId: zone?.id || null };
+  },
+
   // Compatibility: "cells" style for AppContext — camelCase accessors
   getCells: async () => {
     await ensure();

@@ -2,6 +2,8 @@ import { crowdService } from './crowdService.js';
 import { incidentService } from './incidentService.js';
 import { routeService } from './routeService.js';
 import { weatherService } from './weatherService.js';
+import { cellCountService } from './cellCountService.js';
+import { locationService } from './locationService.js';
 
 // Time-of-day crowd multiplier (Wari procession pattern)
 // Peaks: morning 8-11am, evening 4-7pm. Lulls: midday, night.
@@ -76,22 +78,51 @@ export const aiService = {
 
   // Calculate overall pilgrim pressure score (used on Dashboard)
   async calculateOverallPressure() {
-    const [zones, incidents, weather] = await Promise.all([
+    const [zones, incidents, weather, cells, pilgrimRaw] = await Promise.all([
       crowdService.list(),
       incidentService.list(),
       weatherService.get(),
+      cellCountService.list(),
+      locationService.getPilgrimLocation(),
     ]);
 
     const zoneIncidents = incidentImpact(zones, incidents);
     const todMult = timeOfDayMultiplier();
     const weatherMult = weatherImpactFactor(weather);
 
-    const totalPeople = zones.reduce((s, z) => s + (Number(z.people_count) || 0), 0);
+    // Build zoneId -> { people, testPeople, growth } from live cell_counts telemetry.
+    const liveByZone = new Map();
+    let liveTotal = 0;
+    let liveTestTotal = 0;
+    for (const c of cells) {
+      if (!c.zoneId) continue;
+      if (!liveByZone.has(c.zoneId)) liveByZone.set(c.zoneId, { people: 0, testPeople: 0, growth: 0 });
+      const agg = liveByZone.get(c.zoneId);
+      agg.people += c.count;
+      agg.testPeople += c.testCount;
+      const trend = cellCountService.getCellTrend(c, 30);
+      if (trend.samples >= 2) agg.growth += trend.ratePerMin * 60;
+      liveTotal += c.count;
+      liveTestTotal += c.testCount;
+    }
+    for (const agg of liveByZone.values()) agg.growth = Math.min(100, agg.growth);
+
+    // Zones currently tracked by the GPS layer (real pilgrim devices on the route)
+    const trackedPilgrimCount = pilgrimRaw && pilgrimRaw.latitude != null ? 1 : 0;
+
+    const totalPeople = liveTotal + trackedPilgrimCount; // telemetry-driven, not legacy stubs
     const totalCapacity = zones.reduce((s, z) => s + (Number(z.capacity) || 10000), 0);
+
+    // Real growth: aggregate live cell growth for zones that have a measurement
+    const growthEntries = [...liveByZone.values()];
+    const totalGrowth = growthEntries.length
+      ? growthEntries.reduce((s, g) => s + g.growth, 0) / growthEntries.length
+      : 0;
+
+    // Risk from the aggregation layer (crowd_zones.risk_score is telemetry-driven)
     const avgRisk = zones.length
       ? Math.round(zones.reduce((s, z) => s + (Number(z.risk_score) || 0), 0) / zones.length)
       : 0;
-    const totalGrowth = zones.reduce((s, z) => s + (Number(z.growth_rate) || 0), 0) / (zones.length || 1);
     const activeIncidents = (incidents || []).filter((i) => !['RESOLVED', 'CLOSED'].includes(i.status)).length;
     const criticalZones = zones.filter((z) => (Number(z.risk_score) || 0) >= 80).length;
 
@@ -110,8 +141,13 @@ export const aiService = {
     const predictedPeople = Math.round(totalPeople * (1 + (totalGrowth / 100) * 0.5) * todMult * weatherMult);
     const predictedRisk = Math.min(99, Math.max(5, Math.round(riskScore * (1 + totalGrowth / 200))));
 
-    // Confidence: higher when we have more data
-    const confidence = Math.min(95, 70 + (zones.length > 0 ? 10 : 0) + (weather ? 10 : 0) + (activeIncidents > 0 ? 5 : 0));
+    // Confidence: higher with real history volume; lower if everything is synthetic
+    const sampleCounts = cells.map((c) => (c.history || []).length);
+    const maxSamples = sampleCounts.length ? Math.max(...sampleCounts) : 0;
+    const sampleFactor = Math.min(15, Math.round(maxSamples / 4));
+    const simulatedFraction = liveTotal > 0 ? liveTestTotal / liveTotal : 1;
+    const simulatedDeduction = Math.round(simulatedFraction * 10);
+    const confidence = Math.min(95, Math.max(40, 60 + sampleFactor + (weather ? 10 : 0) + (activeIncidents > 0 ? 5 : 0) - simulatedDeduction));
 
     // Determine risk level
     let riskLevel = 'LOW';
@@ -166,19 +202,26 @@ export const aiService = {
       weatherFactor: weatherMult,
       weatherCondition: weather?.condition || 'Unknown',
       temperature: weather?.temperature,
+      // PHASE 1 flags — lets the UI show whether numbers are live or simulated
+      liveZoneCount: liveByZone.size,
+      simulatedFraction: Math.round(simulatedFraction * 100) / 100,
+      dataMode: simulatedFraction > 0.5 ? 'SIMULATED' : 'LIVE',
+      forecastBase: Math.abs(totalGrowth) > 0.5 ? 'realtime' : 'time-of-day',
     };
   },
 
   // Dynamic route recommendation based on real data
   async calculateRouteRecommendation() {
-    const [zones, incidents, routes, weather] = await Promise.all([
+    const [zones, incidents, routes, weather, cells] = await Promise.all([
       crowdService.list(),
       incidentService.list(),
       routeService.list(),
       weatherService.get(),
+      cellCountService.list(),
     ]);
 
     const zoneIncidents = incidentImpact(zones, incidents);
+    const liveByZone = new Map(cells.filter((c) => c.zoneId).map((c) => [c.zoneId, c]));
 
     // Score each route based on real conditions
     const scoredRoutes = routes.map((route) => {
@@ -188,7 +231,6 @@ export const aiService = {
       const baseTime = Number(route.estimated_minutes) || 140;
 
       // Adjust crowd score based on real zone data along route
-      // If route passes through high-risk zones, increase its crowd score
       const isMainRoute = (route.id === 'route-main' || route.name?.toLowerCase().includes('main'));
       const routeZone = isMainRoute
         ? zones.find((z) => z.name?.includes('Loni') || z.id === 'zone-24')
@@ -199,10 +241,14 @@ export const aiService = {
 
       if (routeZone) {
         const zoneRisk = Number(routeZone.risk_score) || 0;
-        const zonePeople = Number(routeZone.people_count) || 0;
-        const zoneGrowth = Number(routeZone.growth_rate) || 0;
+        const live = routeZone.id ? liveByZone.get(routeZone.id) : null;
+        // Prefer live cell telemetry when present; fall back to zone snapshot
+        const zonePeople = live ? live.total : (Number(routeZone.people_count) || 0);
+        const zoneGrowth = live
+          ? cellCountService.getCellTrend(live, 30).ratePerMin * 60 || (Number(routeZone.growth_rate) || 0)
+          : (Number(routeZone.growth_rate) || 0);
         adjustedCrowd = Math.min(100, Math.round(baseCrowd * 0.3 + zoneRisk * 0.4 + Math.min(50, zonePeople / 200) * 0.3));
-        adjustedRisk = Math.min(100, Math.round(baseRisk * 0.3 + zoneRisk * 0.5 + zoneGrowth * 0.2));
+        adjustedRisk = Math.min(100, Math.round(baseRisk * 0.3 + zoneRisk * 0.5 + Math.min(100, zoneGrowth) * 0.2));
       }
 
       // Weather modifier
@@ -297,10 +343,16 @@ export const aiService = {
     ]);
     if (!zone) return null;
 
-    const current = Number(zone.people_count) || 0;
-    const growth = Number(zone.growth_rate) || 0;
     const todMult = timeOfDayMultiplier();
     const weatherMult = weatherImpactFactor(weather);
+
+    // Real growth from cell_counts history when the zone has a grid cell
+    const liveCell = await cellCountService.getByZoneId(zoneId);
+    const trend = liveCell ? cellCountService.getCellTrend(liveCell, 30) : null;
+    const realGrowth = trend && trend.samples >= 2 ? trend.ratePerMin * 60 : null;
+
+    const current = realGrowth != null && liveCell ? liveCell.total : (Number(zone.people_count) || 0);
+    const growth = realGrowth != null ? realGrowth : (Number(zone.growth_rate) || 0);
 
     // 30-min forecast
     const forecast30m = Math.round(current * (1 + (growth / 100) * 0.5) * todMult * weatherMult);
@@ -321,6 +373,7 @@ export const aiService = {
       riskForecast30m: risk30m,
       riskForecast60m: risk60m,
       growthRate: growth,
+      growthSource: realGrowth != null ? 'realtime' : 'snapshot',
       timeOfDayFactor: todMult,
       weatherFactor: weatherMult,
     };

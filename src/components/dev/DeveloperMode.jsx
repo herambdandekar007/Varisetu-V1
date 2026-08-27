@@ -17,7 +17,6 @@ export default function DeveloperMode() {
   const [open, setOpen] = useState(false);
   const { role, selectRole } = useAuth();
   const {
-    setSelectedRole,
     applyCrowdMultiplier,
     setSimulationTemperature,
     triggerIncidentDemo,
@@ -26,6 +25,9 @@ export default function DeveloperMode() {
     resetDemoScenario,
     toggleCrowdSimulation,
     activeDemo,
+    simulateHealthExposure,
+    simulateCampStress,
+    latestHealth,
     weather,
     groupMembers,
     simulateGroupSeparation,
@@ -33,14 +35,12 @@ export default function DeveloperMode() {
     groupSeparationActive,
   } = useApp();
   const navigate = useNavigate();
-  const activeRole = (typeof role === 'string' ? role : role?.id) || 'pilgrim';
+  const activeRole = role || 'pilgrim';
 
   if (import.meta.env.PROD) return null;
 
   const handleSwitch = (newRole) => {
-    const roleData = { id: newRole.id, label: newRole.label };
-    selectRole(roleData);
-    setSelectedRole(newRole.label);
+    selectRole(newRole.id);
     setOpen(false);
     navigate(getHomeRoute(newRole.id));
   };
@@ -63,10 +63,17 @@ export default function DeveloperMode() {
     { label: 'Crowd Surge', value: 'CROWD_SURGE', tone: 'bg-orange-600 text-white' },
   ];
 
-  const roadOptions = [
-    { label: 'Open', value: 'OPEN', tone: 'bg-emerald-500 text-white' },
-    { label: 'Blocked', value: 'BLOCKED', tone: 'bg-red-500 text-white' },
-  ];
+const roadOptions = [
+  { label: 'Open', value: 'OPEN', tone: 'bg-emerald-500 text-white' },
+  { label: 'Blocked', value: 'BLOCKED', tone: 'bg-red-500 text-white' },
+];
+
+const healthOptions = [
+  { label: 'Walk 2 km', km: 2, minutes: 30, tempC: null, restedMinutes: 0, tone: 'bg-emerald-500 text-white', desc: 'Easy start' },
+  { label: 'Walk 8 km', km: 8, minutes: 110, tempC: null, restedMinutes: 0, tone: 'bg-amber-500 text-white', desc: 'Focus mode' },
+  { label: 'Heat 40°C', km: 6, minutes: 80, tempC: 40, restedMinutes: 0, tone: 'bg-red-500 text-white', desc: 'Heat stress' },
+  { label: 'Take rest', km: 0, minutes: 0, tempC: null, restedMinutes: 45, tone: 'bg-blue-500 text-white', desc: 'Recovery' },
+];
 
   const activeCrowd = crowdOptions.find((o) => Math.abs((simulation.crowdMultiplier || 1) - o.value) < 0.01)?.value || 1;
   const activeTemp = tempOptions.find((o) => o.value === simulation.temperature)?.value ?? 32;
@@ -211,6 +218,55 @@ export default function DeveloperMode() {
                         key={opt.label}
                         onClick={() => setSimulationRoadStatus(opt.value)}
                         className={`rounded-xl px-2 py-2 text-[11px] font-bold transition ${activeRoad === opt.value ? opt.tone + ' ring-2 ring-offset-2 ring-slate-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-t border-dashed border-slate-100 pt-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Health exposure</p>
+                    {latestHealth && (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                        {latestHealth.risk_level} · {latestHealth.risk_score}/100
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {healthOptions.map((opt) => (
+                      <button
+                        key={opt.label}
+                        onClick={() => simulateHealthExposure({ km: opt.km, minutes: opt.minutes, tempC: opt.tempC, restedMinutes: opt.restedMinutes })}
+                        className="rounded-xl bg-slate-50 px-2 py-2 text-left transition hover:bg-slate-100"
+                      >
+                        <span className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold ${opt.tone}`}>{opt.label}</span>
+                        <p className="mt-1 text-[10px] text-slate-400">{opt.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4 border-t border-dashed border-slate-100 pt-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Camp stock</p>
+                    {simulation.campStress ? (
+                      <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600">
+                        Stress ×{simulation.campStress}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: 'Normal', value: 0, tone: 'bg-emerald-500 text-white' },
+                      { label: 'Low stock', value: 1, tone: 'bg-amber-500 text-white' },
+                      { label: 'Deplete', value: 2, tone: 'bg-red-600 text-white' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.label}
+                        onClick={() => simulateCampStress(opt.value)}
+                        className={`rounded-xl px-2 py-2 text-[11px] font-bold transition ${(simulation.campStress || 0) === opt.value ? opt.tone + ' ring-2 ring-offset-2 ring-slate-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                       >
                         {opt.label}
                       </button>

@@ -11,6 +11,7 @@ import SidebarFooter from './SidebarFooter';
 const fieldItems = [
   { label: 'My Tasks', to: '/volunteer/tasks', icon: ClipboardDocumentCheckIcon },
   { label: 'Incident Map', to: '/volunteer/zone', icon: MapPinIcon },
+  { label: 'Nearby Pilgrims', to: '/volunteer/pilgrims', icon: UserGroupIcon },
   { label: 'Emergency Requests', to: '/volunteer/requests', icon: ExclamationTriangleIcon },
 ];
 

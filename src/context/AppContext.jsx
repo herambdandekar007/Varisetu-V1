@@ -15,10 +15,13 @@ import { taskService } from '../services/taskService';
 import { alertService } from '../services/alertService';
 import { routeService } from '../services/routeService';
 import { campService } from '../services/campService';
+import { stayService } from '../services/stayService';
 import { locationService } from '../services/locationService';
 import { lostFoundService } from '../services/lostFoundService';
 import { weatherService } from '../services/weatherService';
 import { aiService } from '../services/aiService';
+import { cellCountService } from '../services/cellCountService';
+import { healthService } from '../services/healthService';
 
 const AppContext = createContext(null);
 
@@ -55,6 +58,7 @@ const initialSimulation = {
   incidentType: null,
   roadStatus: 'OPEN',
   crowdMultiplier: 1.0,
+  dataMode: 'LIVE',
 };
 
 const DEMO_VOLUNTEER_ID = 'v-volunteer-demo';
@@ -80,7 +84,6 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
 export function AppProvider({ children }) {
   const [isAccessibilityMode, setIsAccessibilityMode] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('Pilgrim');
 
   // Legacy state kept for backward compat with older pages/map components
   const [resources, setResources] = useState(initialResources);
@@ -96,9 +99,12 @@ export function AppProvider({ children }) {
   const [incidents, setIncidents] = useState(() => incidentService.listActive());
   const [tasks, setTasks] = useState(() => taskService.list());
   const [alerts, setAlerts] = useState(() => alertService.listActive());
+  const [campInventory, setCampInventory] = useState([]);
   const [routes, setRoutes] = useState(() => routeService.list());
   const [routeRecommendation, setRouteRecommendation] = useState(() => routeService.getRecommendedRoute());
   const [camps, setCamps] = useState(() => campService.list());
+  const [stays, setStays] = useState(() => stayService.list());
+  const [bookingSucceededId, setBookingSucceededId] = useState(null);
   const [pilgrimLocation, setPilgrimLocation] = useState(() => locationService.getPilgrimLocation());
   const [sightings, setSightings] = useState([]);
 
@@ -107,6 +113,8 @@ export function AppProvider({ children }) {
   const [aiPressure, setAiPressure] = useState(null);
   const [aiRouteRec, setAiRouteRec] = useState(null);
   const aiPressureTimerRef = useRef(null);
+
+  const [healthSnapshots, setHealthSnapshots] = useState([]);
 
   const [crowdSummary, setCrowdSummary] = useState(() => crowdService.getSummary());
   const [crowdKPIs, setCrowdKPIs] = useState(() => crowdService.getKPIs());
@@ -118,6 +126,8 @@ export function AppProvider({ children }) {
   const simulationTimerRef = useRef(null);
   const lastNotificationRiskRef = useRef(null);
   const subscriberCleanupRef = useRef([]);
+  const aiRefreshRef = useRef(null);
+  const aiRecalcThrottleRef = useRef(0);
 
   // Register subscribers to all services on mount
   useEffect(() => {
@@ -130,12 +140,14 @@ export function AppProvider({ children }) {
       crowdService.subscribeTrend((next) => setCrowdTrend(next.map((p) => ({ time: p.window, pilgrims: Math.round(p.pilgrims / 1000), risk: Math.min(75, Math.round(p.pilgrims / 1200)) })))),
       incidentService.subscribe((next) => setIncidents(next.filter((i) => i.status !== 'RESOLVED'))),
       taskService.subscribe((next) => setTasks(next)),
-      alertService.subscribe((next) => setAlerts(next.filter((a) => !a.expiresAt || new Date(a.expiresAt) > new Date()))),
+      alertService.subscribe((next) => setAlerts(next.filter((a) => !alertService.isExpired(a)))),
       routeService.subscribeRoutes((next) => {
         setRoutes(next);
         setRouteRecommendation(routeService.getRecommendedRoute());
       }),
       campService.subscribe((next) => setCamps(next)),
+      campService.subscribeInventory((next) => setCampInventory(next)),
+      stayService.subscribe((next) => setStays(next)),
       locationService.subscribePilgrimLocation((next) => setPilgrimLocation(next)),
       lostFoundService.subscribeSightings((next) => setSightings(next)),
       locationService.subscribePermission((next) => setLocationPermission(next)),
@@ -145,10 +157,23 @@ export function AppProvider({ children }) {
           setSimulation((prev) => ({ ...prev, temperature: next.temperature, temperatureC: next.temperature }));
         }
       }),
+      // Live cell_counts pushes → refresh AI pressure/forecast (throttled)
+      cellCountService.subscribe((_cells) => {
+        const now = Date.now();
+        if (now - (aiRecalcThrottleRef.current || 0) >= 25000) {
+          aiRecalcThrottleRef.current = now;
+          aiRefreshRef.current?.();
+        }
+      }),
+      // Health assistant: live snapshots + GPS walking progress
+      healthService.subscribe((next) => setHealthSnapshots(next)),
     ];
 
     // Request geolocation permission on app load
     locationService.requestPermission();
+
+    // Track GPS movement for the health assistant (distance / time)
+    healthService.startTracking();
 
     // Immediately fetch weather for Wari route area (Pune) so data shows fast
     // This uses known coordinates for the pilgrimage route
@@ -190,6 +215,7 @@ export function AppProvider({ children }) {
       }
     }
 
+    aiRefreshRef.current = recalculate;
     recalculate();
 
     // Recalculate every 60 seconds
@@ -222,8 +248,13 @@ export function AppProvider({ children }) {
     const isCritical = snapshot.risk >= 85;
     const isHigh = snapshot.risk >= 65 && snapshot.risk < 85;
 
-    crowdService.applySimulationMultiplier(snapshot.factor, 'zone-24');
-    routeService.applyCrowdRiskToMain(snapshot.factor);
+    // Feed the real pipeline — synthetic pings; the 30s aggregation moves
+    // crowd_zones.people_count/density/risk from telemetry.
+    crowdService.burstSimulationPings({
+      zoneId: 'zone-24',
+      count: Math.max(10, Math.round((snapshot.factor - 1) * 100)),
+      label: 'dev-surge',
+    });
 
     setSimulation((prev) => {
       const newHistory = [
@@ -269,6 +300,7 @@ export function AppProvider({ children }) {
         recommendedRoute,
         activeAlerts: newAlerts,
         step: stepIndex,
+        dataMode: 'SIMULATED',
       };
     });
 
@@ -409,8 +441,23 @@ export function AppProvider({ children }) {
   }, [stopCrowdSurge]);
 
   const simulateGroupSeparation = useCallback((memberId) => {
+    // Project the member ~300m perpendicular (bearing 0° = north) from their CURRENT position.
+    // The Wari corridor runs roughly E-W through this area, so north is off-road but adjacent.
+    const DISTANCE_M = 300;
+    const bearingRad = 0; // 0° = North
+    const dLat = (DISTANCE_M * Math.cos(bearingRad)) / 111320;
+    const dLng = (DISTANCE_M * Math.sin(bearingRad)) / (111320 * Math.cos((18.487 * Math.PI) / 180));
     setGroupMembers((prev) =>
-      prev.map((m) => m.id === memberId ? { ...m, lat: 18.520, lng: 74.120, separated: true } : m),
+      prev.map((m) =>
+        m.id === memberId
+          ? {
+              ...m,
+              lat: Math.round((m.lat + dLat) * 1e6) / 1e6,
+              lng: Math.round((m.lng + dLng) * 1e6) / 1e6,
+              separated: true,
+            }
+          : m,
+      ),
     );
     setGroupSeparationActive(true);
   }, []);
@@ -462,10 +509,12 @@ export function AppProvider({ children }) {
     return alert;
   }, [addNotification]);
 
-  const assignVolunteerTask = useCallback(({ taskId, incidentId, volunteerId = DEMO_VOLUNTEER_ID, volunteerName = DEMO_VOLUNTEER_NAME, title, description, priority, location, zoneId, zoneName }) => {
+  const assignVolunteerTask = useCallback(({ taskId, incidentId, volunteerId, volunteerName, title, description, priority, location, zoneId, zoneName }) => {
+    const vId = volunteerId || DEMO_VOLUNTEER_ID;
+    const vName = volunteerName || DEMO_VOLUNTEER_NAME;
     let task;
     if (taskId) {
-      task = taskService.assign(taskId, volunteerId, volunteerName);
+      task = taskService.assign(taskId, vId, vName);
     } else if (incidentId) {
       const incident = incidentService.getById(incidentId);
       if (!incident) throw new Error('Incident not found');
@@ -477,8 +526,8 @@ export function AppProvider({ children }) {
         zoneName: zoneName || incident.zoneName,
         location: location || { latitude: incident.latitude, longitude: incident.longitude },
       });
-      task = taskService.assign(task.id, volunteerId, volunteerName);
-      incidentService.startResponding(incidentId, volunteerId);
+      task = taskService.assign(task.id, vId, vName);
+      incidentService.startResponding(incidentId, vId);
     } else {
       task = taskService.create({
         title: title || 'Controller-assigned task',
@@ -487,15 +536,15 @@ export function AppProvider({ children }) {
         location: location || { latitude: 18.493, longitude: 74.100 },
         zoneId, zoneName,
       });
-      task = taskService.assign(task.id, volunteerId, volunteerName);
+      task = taskService.assign(task.id, vId, vName);
     }
     addNotification({
       id: `task-assign-${task.id}`,
       title: `Task assigned: ${task.title}`,
-      text: `Volunteer: ${volunteerName} · Priority: ${task.priority}`,
+      text: `Volunteer: ${vName} · Priority: ${task.priority}`,
       type: 'task-assign',
     });
-    toast.success(`Task created and assigned to ${volunteerName}`);
+    toast.success(`Task created and assigned to ${vName}`);
     return task;
   }, [addNotification]);
 
@@ -559,14 +608,28 @@ export function AppProvider({ children }) {
 
   // =========== SIMULATION DEMO CONTROLS (STEP 16) ===========
 
-  const applyCrowdMultiplier = useCallback((multiplier, zoneId = null) => {
-    crowdService.applySimulationMultiplier(multiplier, zoneId);
-    routeService.applyCrowdRiskToMain(multiplier);
+  const applyCrowdMultiplier = useCallback(async (multiplier, zoneId = null) => {
+    // Developer-mode crowd control: inject synthetic pings into the real
+    // pipeline (location_pings → aggregate_cell_counts → crowd_zones).
+    // The displayed numbers then move from telemetry, not local overrides.
+    const burst = await crowdService.burstSimulationPings({
+      zoneId,
+      count: multiplier >= 1.0
+        ? Math.max(12, Math.round((multiplier - 1) * 80))
+        : Math.max(4, Math.round((1 - multiplier) * 40)),
+      label: 'dev-multiplier',
+    });
+
     setSimulation((prev) => ({
       ...prev,
-      currentCrowdCount: Math.round(prev.currentCrowdCount * multiplier),
       crowdMultiplier: multiplier,
+      dataMode: 'SIMULATED',
+      lastBurst: burst.inserted,
+      currentCrowdCount: multiplier >= 1.0
+        ? Math.round(prev.currentCrowdCount * (1 + (multiplier - 1) * 0.3))
+        : Math.round(prev.currentCrowdCount * multiplier),
     }));
+    return burst;
   }, []);
 
   const setSimulationTemperature = useCallback((temperatureC) => {
@@ -575,6 +638,99 @@ export function AppProvider({ children }) {
       temperatureC,
       temperature: temperatureC,
     }));
+  }, []);
+
+  // Developer-mode camp resource stress: pushes real HUMAN pipeline rows —
+  // the SAME per-camp inventory (camp_inventory) the medical / municipality
+  // UIs render, so low stock propagates live instead of being a local override.
+  const simulateCampStress = useCallback(async (intensity) => {
+    const inventoryItems = await campService.getInventory();
+    if (!inventoryItems.length) return { upserted: 0 };
+
+    // Drain water/food/medicine by intensity and flip their status to LOW/OUT.
+    const targets = inventoryItems.filter((i) => ['WATER', 'FOOD', 'MEDICINE'].includes(i.category));
+    let upserted = 0;
+    for (const item of targets) {
+      const qty = Number(item.quantity) || 0;
+      const depleted = intensity >= 2 || (intensity === 1 && ['FOOD', 'WATER'].includes(item.category));
+      const nextQty = depleted ? Math.floor(qty * (intensity === 2 ? 0.02 : intensity === 1 ? 0.1 : 0.4)) : Math.floor(qty * 0.55);
+      const nextStatus = nextQty <= 0 ? 'OUT' : depleted ? 'LOW' : 'OK';
+      const res = await campService.updateInventoryItem(item.id, {
+        quantity: Math.max(nextQty, 0),
+        status: nextQty <= 0 ? 'OUT' : nextStatus,
+        isDemo: true,
+      });
+      if (res) upserted += 1;
+    }
+
+    setSimulation((prev) => ({ ...prev, dataMode: 'SIMULATED', campStress: intensity }));
+
+    const flags = await campService.inventoryFlags();
+    if (flags.length) {
+      addNotification({
+        id: `camp-stock-${Date.now()}`,
+        title: intensity >= 2 ? 'Camp stock critically low' : 'Camp stock running low',
+        text: `${flags.length} inventory item${flags.length !== 1 ? 's' : ''} at/near depletion across medical camps.`,
+        type: 'camp-stock',
+      });
+      toast.warn(`${flags.length} camp inventory flag${flags.length !== 1 ? 's' : ''} (LOW/OUT)`);
+    }
+    return { upserted, flags: flags.length };
+  }, [addNotification]);
+
+  // Developer-mode stay pressure: reserves spots on the SAME real stay_listings
+  // availability (via book_stay RPC) the pilgrim page renders, so "Full"/free
+  // counts move from live telemetry rather than local overrides.
+  const simulateStayStress = useCallback(async (intensity) => {
+    const listings = await stayService.listOpen();
+    let booked = 0;
+    for (const s of listings.slice(0, intensity === 2 ? listings.length : intensity === 1 ? 2 : 1)) {
+      const qty = intensity === 2 ? (s.available || 1) : intensity === 1 ? Math.max(1, Math.floor((s.available || 0) * 0.6)) : 1;
+      const res = await stayService.book({
+        listingId: s.id,
+        partySize: Math.max(1, qty),
+        source: 'DEV',
+        isTestData: true,
+      });
+      if (res.success) booked += 1;
+    }
+    setSimulation((prev) => ({ ...prev, dataMode: 'SIMULATED', stayStress: intensity }));
+    const summary = await stayService.summary();
+    if (summary.open === 0) {
+      addNotification({
+        id: `stay-full-${Date.now()}`,
+        title: 'All stays at/near capacity',
+        text: `Total availability is ${summary.available} spots across ${summary.total} listings.`,
+        type: 'incident',
+      });
+      toast.warn('Stay pressure applied — availability updated live.');
+    }
+    return { booked, available: summary.available };
+  }, [addNotification]);
+
+  // Developer-mode health exposure: feeds the SAME health pipeline with
+  // synthetic test snapshots (is_test_data) so the health card / corridor
+  // widget react to real rule-engine scoring.
+  const simulateHealthExposure = useCallback(async ({ km = 2, minutes = 30, tempC = null, restedMinutes = 0 } = {}) => {
+    const session = healthService.getSession();
+    const distanceM = (session.distanceM || 0) + (km || 0) * 1000;
+    const mins = (session.minutes || 0) + (minutes || 0);
+    const res = await healthService.saveSnapshot({
+      distanceM,
+      minutes: mins,
+      restedMinutes: restedMinutes || 0,
+      ambientC: tempC ?? undefined,
+      zoneId: 'zone-24',
+      zoneName: 'Loni Market',
+      latitude: 18.493,
+      longitude: 74.100,
+      isTestData: true,
+    });
+    if (res) {
+      setSimulation((prev) => ({ ...prev, dataMode: 'SIMULATED' }));
+      toast.success(`Health snapshot recorded: ${res.risk_level} · risk ${res.risk_score}`);
+    }
+    return res;
   }, []);
 
   const triggerIncidentDemo = useCallback((incidentMode) => {
@@ -600,7 +756,7 @@ export function AppProvider({ children }) {
         source: 'AI',
       });
       addNotification({ id: `demo-inc-${incident.id}`, title: `Demo incident: ${incident.title}`, text: incident.description, type: 'incident' });
-      crowdService.applySimulationMultiplier(1.6, 'zone-24');
+      crowdService.burstSimulationPings({ zoneId: 'zone-24', count: 60, label: 'dev-surge-incident' });
       routeService.applyCrowdRiskToMain(1.6);
       return incident;
     }
@@ -622,8 +778,6 @@ export function AppProvider({ children }) {
     setIsAccessibilityMode,
     isNotificationOpen,
     setIsNotificationOpen,
-    selectedRole,
-    setSelectedRole,
     resources,
     setResources,
     mapPoints,
@@ -651,6 +805,9 @@ export function AppProvider({ children }) {
     routes,
     routeRecommendation,
     camps,
+    campInventory,
+    stays,
+    bookingSucceededId,
     pilgrimLocation,
     sightings,
 
@@ -669,6 +826,7 @@ export function AppProvider({ children }) {
     alertService,
     routeService,
     campService,
+    stayService,
     locationService,
     lostFoundService,
     weatherService,
@@ -692,6 +850,14 @@ export function AppProvider({ children }) {
     setSimulationTemperature,
     triggerIncidentDemo,
     setSimulationRoadStatus,
+    simulateHealthExposure,
+    simulateCampStress,
+    simulateStayStress,
+
+    // Health assistant
+    healthSnapshots,
+    latestHealth: healthSnapshots[0] || null,
+    healthService,
 
     // Group separation
     groupMembers,
@@ -702,7 +868,6 @@ export function AppProvider({ children }) {
   }), [
     isAccessibilityMode,
     isNotificationOpen,
-    selectedRole,
     resources,
     mapPoints,
     updateResource,
@@ -726,6 +891,7 @@ export function AppProvider({ children }) {
     routes,
     routeRecommendation,
     camps,
+    campInventory,
     pilgrimLocation,
     sightings,
     weather,
@@ -743,6 +909,12 @@ export function AppProvider({ children }) {
     setSimulationTemperature,
     triggerIncidentDemo,
     setSimulationRoadStatus,
+    simulateHealthExposure,
+    simulateCampStress,
+    simulateStayStress,
+    healthSnapshots,
+    latestHealth,
+    healthService,
     groupMembers,
     groupSeparationActive,
     simulateGroupSeparation,

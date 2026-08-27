@@ -16,7 +16,7 @@ const roleColors = {
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, profile, role, logout } = useAuth();
-  const roleId = (typeof role === 'string' ? role : role?.id) || 'pilgrim';
+  const roleId = role || 'pilgrim';
   const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.name || 'User';
   const initial = displayName[0]?.toUpperCase() || '?';
 

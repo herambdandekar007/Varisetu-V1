@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function RoleProtectedRoute({ allowedRoles }) {
   const { role } = useAuth();
-  const roleId = typeof role === 'string' ? role : role?.id;
+  const roleId = role;
 
   if (!roleId) {
     return <Navigate to="/select-role" replace />;

@@ -44,7 +44,7 @@ const navByRole = {
 export default function MobileNavigation() {
   const { t } = useTranslation();
   const { role } = useAuth();
-  const roleId = (typeof role === 'string' ? role : role?.id) || 'pilgrim';
+  const roleId = role || 'pilgrim';
   const items = navByRole[roleId] || navByRole.pilgrim;
 
   return (

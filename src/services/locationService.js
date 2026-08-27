@@ -32,6 +32,11 @@ let permissionState = 'prompt'; // 'granted' | 'denied' | 'prompt' | 'unavailabl
 let watchId = null;
 let permissionRequested = false;
 
+// Auth-bound user id (set from AuthContext so GPS fixes can persist as pings)
+let currentUserId = null;
+let lastPersistedAt = 0;
+const PING_THROTTLE_MS = 20000; // persist at most once every 20s per user
+
 const pilgrimSubscribers = new Set();
 const permissionSubscribers = new Set();
 
@@ -63,6 +68,29 @@ async function findNearestZone(lat, lng) {
   }
 }
 
+// Persist one ping row to location_pings. Throttled per user.
+// Synthetic (is_test_data) pings are not throttled — callers control their own rate.
+async function persistPing({ latitude, longitude, accuracy, heading, isTestData = false, force = false }) {
+  if (!currentUserId && !isTestData) return;
+  const now = Date.now();
+  if (!isTestData && !force && now - lastPersistedAt < PING_THROTTLE_MS) return;
+  lastPersistedAt = now;
+  try {
+    await supabase.from('location_pings').insert({
+      user_id: isTestData ? null : currentUserId,
+      sim_user_id: isTestData ? `gps-demo-${now}` : null,
+      latitude,
+      longitude,
+      accuracy: accuracy ?? null,
+      heading_deg: heading ?? null,
+      recorded_at: new Date().toISOString(),
+      is_test_data: isTestData,
+    });
+  } catch (err) {
+    console.warn('[locationService] persist ping error:', err);
+  }
+}
+
 async function handleGeolocationPosition(position) {
   const { latitude, longitude, accuracy } = position.coords;
   const nearest = await findNearestZone(latitude, longitude);
@@ -81,6 +109,13 @@ async function handleGeolocationPosition(position) {
     source: 'gps',
   };
   notifyPilgrim();
+
+  await persistPing({
+    latitude,
+    longitude,
+    accuracy,
+    heading: position.coords.heading,
+  });
 }
 
 function handleGeolocationError(error) {
@@ -186,27 +221,22 @@ export const locationService = {
       zoneId: nearest?.id || 'zone-24',
       zoneName: nearest?.name || 'Loni Kalbhor',
       headingDeg: 112,
-      source: 'simulated',
+      source: userId ? 'gps' : 'simulated',
     };
     notifyPilgrim();
 
-    if (userId) {
-      try {
-        await supabase.from('locations').insert({
-          user_id: userId,
-          latitude,
-          longitude,
-          accuracy: accuracyMeters,
-          zone_id: nearest?.id || null,
-          zone_name: nearest?.name || null,
-          heading_deg: 112,
-        });
-      } catch (err) {
-        console.warn('[locationService] persist location error:', err);
-      }
-    }
+    await persistPing({ latitude, longitude, accuracy: accuracyMeters, heading: 112, force: false });
     return pilgrimState;
   },
+
+  // Bind the current authenticated user so GPS fixes persist as pings
+  bindUser: (userId) => {
+    currentUserId = userId || null;
+  },
+
+  getCurrentUserId: () => currentUserId,
+
+  persistPing,
 
   getRoutePath: () => routeCoordinates,
   getNearbyPOIs: (type) => {

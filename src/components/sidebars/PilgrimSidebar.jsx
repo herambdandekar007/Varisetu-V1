@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import {
   ChartBarIcon, HomeIcon, MapIcon, ShieldExclamationIcon,
   UserGroupIcon, UserIcon, WrenchScrewdriverIcon, HeartIcon,
-  MagnifyingGlassIcon,
+  MagnifyingGlassIcon, BuildingOffice2Icon, HomeModernIcon,
+  BellIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import { useApp } from '../../context/AppContext';
@@ -17,12 +18,15 @@ const journeyItems = [
 
 const servicesItems = [
   { name: 'Resources', to: '/resources', icon: WrenchScrewdriverIcon },
-  { name: 'Medical Camps', to: '/emergency', icon: HeartIcon },
+  { name: 'Health Check', to: '/health', icon: HeartIcon },
+  { name: 'Places to Stay', to: '/stay', icon: HomeModernIcon },
+  { name: 'Medical Camps', to: '/emergency', icon: BuildingOffice2Icon },
   { name: 'My Group', to: '/group', icon: UserGroupIcon },
   { name: 'Family & Palkhi', to: '/tracking', icon: UserIcon },
 ];
 
 const safetyItems = [
+  { name: 'Alerts', to: '/alerts', icon: BellIcon },
   { name: 'Emergency Center', to: '/emergency', icon: ShieldExclamationIcon },
 ];
 

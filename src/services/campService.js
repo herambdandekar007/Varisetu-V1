@@ -39,6 +39,43 @@ const TYPE_ALIASES = {
   REST: ['REST'],
 };
 
+// ---- camp_inventory support (per-camp stock line items) ----
+const inventorySubscribers = new Set();
+let inventoryCache = [];
+let inventoryLoaded = false;
+let inventoryChannel = null;
+
+function notifyInventory() {
+  for (const fn of inventorySubscribers) {
+    try { fn(inventoryCache); } catch (_e) { /* subscriber must handle */ }
+  }
+}
+
+async function loadInventory() {
+  const { data, error } = await supabase.from('camp_inventory').select('*').order('noted_at', { ascending: false });
+  if (error) { console.error('[campService] inventory load error:', error); return; }
+  inventoryCache = data || [];
+  inventoryLoaded = true;
+  notifyInventory();
+}
+
+function ensureInventoryRealtime() {
+  if (inventoryChannel) return;
+  try {
+    inventoryChannel = supabase
+      .channel('realtime:public:camp_inventory')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'camp_inventory' }, (payload) => {
+        if (payload.eventType === 'INSERT') inventoryCache = [payload.new, ...inventoryCache];
+        else if (payload.eventType === 'UPDATE') inventoryCache = inventoryCache.map((t) => (t.id === payload.new.id ? payload.new : t));
+        else if (payload.eventType === 'DELETE') inventoryCache = inventoryCache.filter((t) => t.id !== payload.old.id);
+        notifyInventory();
+      })
+      .subscribe();
+  } catch (err) { console.error('[campService] inventory realtime error:', err); }
+}
+
+async function ensureInventory() { if (!inventoryLoaded) await loadInventory(); ensureInventoryRealtime(); }
+
 export const campService = {
   list: async () => { await ensure(); return cache; },
   listByCategory: async (category) => {
@@ -108,6 +145,59 @@ export const campService = {
     cache = [data, ...cache];
     notify();
     return data;
+  },
+  // ---- camp_inventory ----
+  getInventory: async () => { await ensureInventory(); return inventoryCache; },
+  listInventory: async (resourceId) => {
+    await ensureInventory();
+    return inventoryCache.filter((i) => i.resource_id === resourceId);
+  },
+  inventoryFlags: async () => {
+    await ensureInventory();
+    return inventoryCache.filter((i) => i.status !== 'OK');
+  },
+  subscribeInventory: (fn) => {
+    inventorySubscribers.add(fn);
+    fn(inventoryCache);
+    ensureInventory();
+    return () => inventorySubscribers.delete(fn);
+  },
+  createInventoryItem: async (item) => {
+    const remap = {
+      resourceId: 'resource_id', zoneId: 'zone_id', zoneName: 'zone_name',
+      itemName: 'item_name', notedAt: 'noted_at', updatedBy: 'updated_by', isDemo: 'is_demo',
+    };
+    const payload = {};
+    for (const [k, v] of Object.entries(item || {})) {
+      payload[remap[k] || k] = v;
+    }
+    const { data, error } = await supabase.from('camp_inventory').insert(payload).select('*').single();
+    if (error) { console.error('[campService] create inventory error:', error); return null; }
+    inventoryCache = [data, ...inventoryCache];
+    notifyInventory();
+    return data;
+  },
+  updateInventoryItem: async (id, patch) => {
+    const remap = {
+      zoneId: 'zone_id', zoneName: 'zone_name', itemName: 'item_name',
+      notedAt: 'noted_at', updatedBy: 'updated_by', isDemo: 'is_demo',
+    };
+    const dbPatch = {};
+    for (const [k, v] of Object.entries(patch || {})) {
+      dbPatch[remap[k] || k] = v;
+    }
+    const { data, error } = await supabase.from('camp_inventory').update(dbPatch).eq('id', id).select('*').single();
+    if (error) { console.error('[campService] update inventory error:', error); return null; }
+    inventoryCache = inventoryCache.map((t) => (t.id === id ? data : t));
+    notifyInventory();
+    return data;
+  },
+  deleteInventoryItem: async (id) => {
+    const { error } = await supabase.from('camp_inventory').delete().eq('id', id);
+    if (error) { console.error('[campService] delete inventory error:', error); return false; }
+    inventoryCache = inventoryCache.filter((t) => t.id !== id);
+    notifyInventory();
+    return true;
   },
   distanceKm,
 };

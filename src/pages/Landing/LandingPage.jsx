@@ -34,7 +34,7 @@ function JourneyIllustration() {
 
 export default function LandingPage() {
   const { role } = useAuth();
-  const dashboardPath = role ? getHomeRoute(typeof role === 'string' ? role : role.id) : '/select-role';
+  const dashboardPath = role ? getHomeRoute(role) : '/select-role';
 
   return <div className="overflow-hidden bg-[#FCFDFC] text-ink"><header className="absolute inset-x-0 top-0 z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8"><Link to="/" className="flex items-center gap-3"><div className="grid h-10 w-10 place-items-center rounded-2xl bg-saffron text-lg font-bold text-white shadow-[0_8px_20px_rgba(255,122,0,.3)]">व</div><div><p className="text-lg font-bold tracking-tight">VariSetu</p><p className="-mt-0.5 text-[10px] font-bold uppercase tracking-[.13em] text-forest">Wari 2026</p></div></Link><nav className="hidden items-center gap-7 text-sm font-bold text-slate-600 md:flex"><a href="#how-it-works" className="hover:text-saffron">How it works</a><a href="#impact" className="hover:text-saffron">Impact</a><a href="#for-authorities" className="hover:text-saffron">For authorities</a></nav><Link to={dashboardPath}><Button className="px-4 py-2.5">Open live dashboard <ArrowRightIcon className="h-4 w-4" /></Button></Link></header>
 

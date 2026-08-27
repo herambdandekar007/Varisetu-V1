@@ -38,14 +38,36 @@ async function ensure() { if (!loaded) await load(); ensureRealtime(); }
 
 export const alertService = {
   list: async () => { await ensure(); return cache; },
+  isExpired: (a) =>
+    a.status === 'EXPIRED' || (!!a.expires_at && new Date(a.expires_at) <= new Date()),
+  isStale: (a) => {
+    if (alertService.isExpired(a)) return false;
+    if (a.status === 'STALE' || a.is_stale === true) return true;
+    // Unacknowledged alerts older than 2 hours are effectively stale even before a sweep.
+    return !a.acknowledged && !!a.created_at && new Date(a.created_at) < new Date(Date.now() - 2 * 60 * 60 * 1000);
+  },
   listActive: async () => {
     await ensure();
     const now = new Date();
-    return cache.filter((a) => !a.expires_at || new Date(a.expires_at) > now);
+    return cache.filter((a) => a.status !== 'EXPIRED' && (!a.expires_at || new Date(a.expires_at) > now));
+  },
+  listStale: async () => {
+    await ensure();
+    return cache.filter((a) => alertService.isStale(a));
   },
   listByZone: async (zoneId) => { await ensure(); return cache.filter((a) => a.zone_id === zoneId); },
   listBySeverity: async (severity) => { await ensure(); return cache.filter((a) => a.severity === severity); },
   listByCreatedBy: async (profileId) => { await ensure(); return cache.filter((a) => a.created_by === profileId); },
+  listForPilgrim: async (zoneId) => {
+    await ensure();
+    const now = new Date();
+    return cache.filter((a) => {
+      if (a.status === 'EXPIRED') return false;
+      if (a.expires_at && new Date(a.expires_at) <= now) return false;
+      // Show global alerts (no zone) or alerts for this zone or adjacent zones
+      return !a.zone_id || a.zone_id === zoneId;
+    });
+  },
   getById: async (id) => { await ensure(); return cache.find((a) => a.id === id) || null; },
   subscribe: (fn) => {
     subscribers.add(fn);
@@ -124,7 +146,12 @@ export const alertService = {
     notify();
     return data;
   },
-  acknowledge: async (id) => alertService.update(id, { acknowledged: true }),
+  acknowledge: async (id) => alertService.update(id, {
+    acknowledged: true,
+    acknowledged_at: new Date().toISOString(),
+    status: 'ACTIVE',
+    is_stale: false,
+  }),
   delete: async (id) => {
     const { error } = await supabase.from('alerts').delete().eq('id', id);
     if (error) { console.error('[alertService] delete error:', error); return false; }

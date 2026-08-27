@@ -1,7 +1,8 @@
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BoltIcon, CloudIcon, ExclamationTriangleIcon, MapPinIcon, ShieldCheckIcon, UserGroupIcon, UserIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import { BoltIcon, CloudIcon, ExclamationTriangleIcon, MapPinIcon, ShieldCheckIcon, UserGroupIcon, UserIcon, PhoneIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
@@ -9,8 +10,10 @@ import Badge from '../../components/common/Badge';
 import SectionTitle from '../../components/common/SectionTitle';
 import MetricCard from '../../components/cards/MetricCard';
 import RouteMap from '../../components/maps/RouteMap';
+import Modal from '../../components/common/Modal';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
+import { alertService } from '../../services/alertService';
 import { cn } from '../../utils/format';
 
 const DEFAULT_STOPS = [
@@ -40,6 +43,20 @@ export default function DashboardPage() {
     aiPressure,
     aiRouteRec,
   } = useApp();
+
+  const [sosModalOpen, setSosModalOpen] = useState(false);
+  const [sosDescription, setSosDescription] = useState('');
+  const [sosSubmitting, setSosSubmitting] = useState(false);
+  const [zoneAlerts, setZoneAlerts] = useState([]);
+
+  useEffect(() => {
+    const zoneId = pilgrimLocation?.zoneId || crowdSummary?.highestRiskZone?.id;
+    if (zoneId) {
+      alertService.listForPilgrim(zoneId).then(setZoneAlerts);
+    } else {
+      alertService.listActive().then(setZoneAlerts);
+    }
+  }, [pilgrimLocation?.zoneId, crowdSummary?.highestRiskZone?.id, alerts]);
 
   const riskLevel = aiPressure?.riskLevel || crowdSummary?.riskLevel || 'LOW';
   const riskScore = aiPressure?.riskScore ?? crowdSummary?.highestRiskZone?.riskScore ?? simulation.riskScore;
@@ -131,33 +148,51 @@ export default function DashboardPage() {
   };
 
   const handleSOS = () => {
-    createEmergency({
-      pilgrimName: profile?.full_name || 'Pilgrim',
-      description: 'Pilgrim pressed SOS button — immediate assistance requested.',
-      latitude: pilgrimLocation?.latitude ?? 18.647,
-      longitude: pilgrimLocation?.longitude ?? 74.084,
-      zoneId: crowdSummary?.highestRiskZone?.id || 'zone-21',
-      zoneName: crowdSummary?.highestRiskZone?.zoneName || 'Loni Market',
-    });
-    toast.error('🚨 SOS transmitted. Emergency services have been notified.');
+    setSosDescription('');
+    setSosModalOpen(true);
+  };
+
+  const submitSOS = async () => {
+    setSosSubmitting(true);
+    try {
+      createEmergency({
+        pilgrimName: profile?.full_name || 'Pilgrim',
+        description: sosDescription || 'Pilgrim pressed SOS button — immediate assistance requested.',
+        latitude: pilgrimLocation?.latitude ?? 18.647,
+        longitude: pilgrimLocation?.longitude ?? 74.084,
+        zoneId: pilgrimLocation?.zoneId || crowdSummary?.highestRiskZone?.id || 'zone-21',
+        zoneName: pilgrimLocation?.zoneName || crowdSummary?.highestRiskZone?.zoneName || 'Loni Market',
+      });
+      toast.success('SOS transmitted. Controllers are notified and dispatching help.', { icon: '🚨', duration: 5000 });
+      setSosModalOpen(false);
+    } finally {
+      setSosSubmitting(false);
+    }
   };
 
   const mergedAlerts = [
-    ...(alerts || []).map((a) => ({
+    ...zoneAlerts.map((a) => ({
       id: a.id,
       title: a.title,
       text: a.message,
-      time: new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      severity: a.severity,
+      zone: a.zone_name,
+      time: new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       tone: a.severity === 'CRITICAL' ? 'bg-red-500' : a.severity === 'HIGH' ? 'bg-orange-500' : a.severity === 'MEDIUM' ? 'bg-amber-500' : 'bg-saffron',
     })),
     ...(simulation.activeAlerts || []).map((a, idx) => ({
       id: `sim-${idx}-${a.id}`,
       title: a.title || a.zone || 'Demo Alert',
       text: a.message || 'Simulated alert',
+      severity: 'MEDIUM',
       time: 'Now',
       tone: 'bg-amber-500',
     })),
-    ...notifications.slice(0, 2).map((n) => ({ ...n, tone: 'bg-saffron' })),
+    ...notifications.filter((n) => n.type === 'sos' || n.type === 'task-assign').slice(0, 2).map((n) => ({
+      ...n,
+      severity: 'HIGH',
+      tone: n.type === 'sos' ? 'bg-red-500' : 'bg-saffron',
+    })),
   ].slice(0, 5);
 
   return (
@@ -260,7 +295,7 @@ export default function DashboardPage() {
               <div className="min-w-0">
                 <p className="text-sm font-bold text-ink">{safetySummary}</p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Crowd: {wariStatus.crowdStatus} · Health: Good · Weather: {temp}°C
+                  {pilgrimLocation?.zoneName ? `Your zone: ${pilgrimLocation.zoneName}` : 'Location pending'}
                 </p>
               </div>
             </div>
@@ -271,6 +306,13 @@ export default function DashboardPage() {
                 Weather {temp}°C
               </div>
             </div>
+            {pilgrimLocation?.zoneName && (
+              <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+                {zoneAlerts.length > 0
+                  ? `${zoneAlerts.length} alert${zoneAlerts.length === 1 ? '' : 's'} active in your zone`
+                  : 'No alerts in your zone'}
+              </div>
+            )}
           </div>
 
           <div className="rounded-3xl bg-ink p-5 text-white shadow-float">
@@ -378,13 +420,13 @@ export default function DashboardPage() {
         <article className="surface p-5">
           <SectionTitle
             title={t('dashboard.latestUpdates')}
-            detail={activeDemo === 'crowd-simulation' ? 'Demo alerts mixed with route updates' : 'Selected for your current route'}
+            detail={pilgrimLocation?.zoneName ? `Alerts for ${pilgrimLocation.zoneName} and nearby` : 'Alerts for your current route'}
             action={<Link to="/alerts" className="text-xs font-bold text-saffron">{t('common.viewAll')}</Link>}
           />
           <div className="space-y-3">
             {mergedAlerts.length === 0 ? (
               <div className="rounded-2xl bg-emerald-50 p-5 text-center text-sm text-emerald-800">
-                ✓ All clear. No active alerts for your route.
+                All clear. No active alerts for your route.
               </div>
             ) : (
               mergedAlerts.map((item) => (
@@ -396,6 +438,9 @@ export default function DashboardPage() {
                       <time className="shrink-0 text-[11px] text-slate-400">{item.time}</time>
                     </div>
                     <p className="mt-1 text-xs leading-5 text-slate-500">{item.text}</p>
+                    {item.zone && (
+                      <p className="mt-1 text-[11px] font-semibold text-slate-400">{item.zone}</p>
+                    )}
                   </div>
                 </div>
               ))
@@ -458,6 +503,58 @@ export default function DashboardPage() {
           </div>
         </article>
       </section>
+
+      {/* SOS Confirmation Modal */}
+      <Modal
+        open={sosModalOpen}
+        onClose={() => { setSosModalOpen(false); setSosDescription(''); }}
+        title="Confirm SOS"
+        description="This will immediately notify controllers and emergency responders with your live location."
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => { setSosModalOpen(false); setSosDescription(''); }}>Cancel</Button>
+            <Button variant="danger" icon={PhoneIcon} onClick={submitSOS} disabled={sosSubmitting}>
+              {sosSubmitting ? 'Transmitting...' : 'Send SOS Now'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-start gap-3">
+              <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+              <div>
+                <p className="text-sm font-bold text-red-800">Emergency SOS</p>
+                <p className="mt-1 text-xs text-red-700">
+                  Your name, live GPS location, and zone will be shared with controllers.
+                  Help will be dispatched to your location.
+                </p>
+              </div>
+            </div>
+          </div>
+          {pilgrimLocation?.latitude && (
+            <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              <MapPinIcon className="h-4 w-4 text-slate-400" />
+              <span>Location: {pilgrimLocation.latitude.toFixed(4)}, {pilgrimLocation.longitude.toFixed(4)}</span>
+              {pilgrimLocation.zoneName && <span className="ml-auto font-semibold text-ink">{pilgrimLocation.zoneName}</span>}
+            </div>
+          )}
+          <div>
+            <label className="label">What's happening? (optional)</label>
+            <textarea
+              rows={3}
+              className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-ink focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none"
+              placeholder="e.g. I fell and can't walk. I'm near the canal junction."
+              value={sosDescription}
+              onChange={(e) => setSosDescription(e.target.value)}
+            />
+          </div>
+          <p className="text-[11px] text-slate-400">
+            Controllers will see your request in real time. You can also call 108 (Ambulance) or 112 (Police) directly.
+          </p>
+        </div>
+      </Modal>
     </>
   );
 }

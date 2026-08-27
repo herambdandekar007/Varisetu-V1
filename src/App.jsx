@@ -48,6 +48,9 @@ const AdminPage = lazy(() => import('./pages/Admin/AdminPage'));
 const OldVolunteerPage = lazy(() => import('./pages/Volunteer/VolunteerPage'));
 const AccessibilityPage = lazy(() => import('./pages/Accessibility/AccessibilityPage'));
 const GroupPage = lazy(() => import('./pages/Pilgrim/GroupPage'));
+const StayPage = lazy(() => import('./pages/Stay/StayPage'));
+const HealthPage = lazy(() => import('./pages/Pilgrim/HealthPage'));
+const AlertsPage = lazy(() => import('./pages/Alerts/AlertsPage'));
 
 function LazyPage({ Component }) {
   return (
@@ -83,7 +86,10 @@ export default function App() {
             <Route path="/dashboard" element={<LazyPage Component={DashboardPage} />} />
             <Route path="/tracking" element={<LazyPage Component={TrackingPage} />} />
             <Route path="/emergency" element={<LazyPage Component={EmergencyPage} />} />
+            <Route path="/alerts" element={<LazyPage Component={AlertsPage} />} />
             <Route path="/group" element={<LazyPage Component={GroupPage} />} />
+            <Route path="/health" element={<LazyPage Component={HealthPage} />} />
+            <Route path="/stay" element={<LazyPage Component={StayPage} />} />
             <Route path="/admin" element={<LazyPage Component={AdminPage} />} />
             <Route path="/volunteer" element={<LazyPage Component={OldVolunteerPage} />} />
           </Route>

@@ -1,19 +1,26 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../../context/AppContext';
 import PageHeader from '../../components/common/PageHeader';
 import Badge from '../../components/common/Badge';
 import { MapIcon } from '@heroicons/react/24/outline';
+import { campService } from '../../services/campService';
 
 const statusBadge = { OPEN: 'green', CLOSED: 'slate', MAINTENANCE: 'orange' };
 const statusLabel = { OPEN: 'Active', CLOSED: 'Inactive', MAINTENANCE: 'Maintenance' };
 
 export default function BarricadesPage() {
   const { t } = useTranslation();
-  const { resources } = useApp();
+  const [resources, setResources] = useState([]);
+
+  useEffect(() => {
+    campService.list().then(setResources);
+    const unsub = campService.subscribe(setResources);
+    return unsub;
+  }, []);
 
   const barricades = useMemo(
-    () => resources.filter((r) => (r.type || r.icon || '').toUpperCase() === 'BARRICADE' || (r.name || '').toLowerCase().includes('barricade')),
+    () => resources.filter((r) => (r.type || '').toUpperCase() === 'BARRICADE' || (r.name || '').toLowerCase().includes('barricade')),
     [resources],
   );
 

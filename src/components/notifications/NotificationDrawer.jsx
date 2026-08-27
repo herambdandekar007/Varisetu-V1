@@ -2,10 +2,15 @@ import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
+import { isNotificationForRole } from '../../data/mockData';
 
 export default function NotificationDrawer() {
   const { t } = useTranslation();
   const { isNotificationOpen, setIsNotificationOpen, notifications } = useApp();
+  const { role } = useAuth();
+  const roleId = role || 'pilgrim';
+  const visibleNotifications = notifications.filter((n) => isNotificationForRole(n, roleId));
 
   return (
     <AnimatePresence>
@@ -50,14 +55,14 @@ export default function NotificationDrawer() {
 
             {/* List */}
             <div className="flex-1 space-y-2 overflow-y-auto px-6 py-5">
-              {notifications.length === 0 ? (
+              {visibleNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <BellIcon className="h-10 w-10 text-slate-300" aria-hidden="true" />
                   <p className="mt-4 text-sm font-bold text-slate-500">{t('notifications.allCaughtUp')}</p>
                   <p className="mt-1 text-xs text-slate-400">{t('notifications.noNewNotifications')}</p>
                 </div>
               ) : (
-                notifications.map((notification) => (
+                visibleNotifications.map((notification) => (
                   <article
                     key={notification.id}
                     className="rounded-2xl border border-slate-100 bg-white p-4 transition-colors hover:bg-slate-50"

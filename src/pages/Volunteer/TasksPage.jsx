@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   ClipboardDocumentCheckIcon, MapPinIcon, PlayIcon, CheckCircleIcon,
   HeartIcon, UsersIcon, ExclamationTriangleIcon, ShieldCheckIcon,
-  ArrowRightIcon, ClockIcon, InformationCircleIcon,
+  ArrowRightIcon, ClockIcon, InformationCircleIcon, XMarkIcon,
 } from '@heroicons/react/24/outline';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
@@ -12,6 +12,7 @@ import SectionTitle from '../../components/common/SectionTitle';
 import MetricCard from '../../components/cards/MetricCard';
 import RouteMap from '../../components/maps/RouteMap';
 import { useApp } from '../../context/AppContext';
+import { taskService } from '../../services/taskService';
 import { cn } from '../../utils/format';
 
 const priorityTone = (p) => {
@@ -52,6 +53,12 @@ export default function TasksPage() {
 
   const [selectedTask, setSelectedTask] = useState(null);
 
+  const handleDecline = async (e, taskId) => {
+    e.stopPropagation();
+    const result = await taskService.decline(taskId);
+    if (result) toast('Task declined and returned to queue.');
+  };
+
   const myTasks = tasks.filter((t) =>
     t.assigned_to === DEMO_VOLUNTEER_ID || t.assigned_to == null || t.status === 'PENDING',
   );
@@ -76,12 +83,21 @@ export default function TasksPage() {
     switch (task.status) {
       case 'PENDING':
         return (
-          <Button
-            variant="primary"
-            onClick={(e) => { e.stopPropagation(); volunteerAcceptTask(task.id); }}
-          >
-            Accept Task
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="primary"
+              onClick={(e) => { e.stopPropagation(); volunteerAcceptTask(task.id); }}
+            >
+              Accept Task
+            </Button>
+            <button
+              onClick={(e) => handleDecline(e, task.id)}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-red-50 text-red-400 transition hover:bg-red-100 hover:text-red-600"
+              title="Decline task"
+            >
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          </div>
         );
       case 'ACCEPTED':
         return (

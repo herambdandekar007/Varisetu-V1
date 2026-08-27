@@ -7,9 +7,11 @@ import {
   MapPinIcon,
   SparklesIcon,
   UserGroupIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useApp } from '../../context/AppContext';
+import { taskService } from '../../services/taskService';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -38,6 +40,12 @@ export default function VolunteerPage() {
     );
   }, [tasks, DEMO_VOLUNTEER_ID]);
 
+  const assignedToMe = useMemo(() => {
+    return tasks.filter(
+      (tk) => tk.assigned_to === DEMO_VOLUNTEER_ID && tk.status !== 'COMPLETED',
+    );
+  }, [tasks, DEMO_VOLUNTEER_ID]);
+
   const completedCount = useMemo(() => {
     return tasks.filter(
       (tk) =>
@@ -45,6 +53,11 @@ export default function VolunteerPage() {
         tk.status === 'COMPLETED',
     ).length;
   }, [tasks, DEMO_VOLUNTEER_ID]);
+
+  const handleDecline = async (taskId) => {
+    const result = await taskService.decline(taskId);
+    if (result) toast('Task declined and returned to queue.');
+  };
 
   const nearbyRequests = useMemo(() => {
     return incidents.filter((i) => i.status !== 'RESOLVED').length;
@@ -107,7 +120,7 @@ export default function VolunteerPage() {
           icon={ClipboardDocumentCheckIcon}
           label="Tasks complete"
           value={`${completedCount}/${completedCount + myTasks.length}`}
-          helper="Today's active checklist"
+          helper={`${assignedToMe.length} assigned to you`}
           trend={{ label: 'On track', direction: 'up' }}
           tone="blue"
           index={1}
@@ -161,6 +174,15 @@ export default function VolunteerPage() {
                       <div className="flex shrink-0 items-center gap-1.5">
                         {priorityBadge(task.priority)}
                         {statusBadge(task.status)}
+                        {task.assigned_to === DEMO_VOLUNTEER_ID && task.status === 'PENDING' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDecline(task.id); }}
+                            className="ml-1 grid h-6 w-6 place-items-center rounded-lg bg-red-50 text-red-400 transition hover:bg-red-100 hover:text-red-600"
+                            title="Decline task"
+                          >
+                            <XMarkIcon className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                     {task.description && (

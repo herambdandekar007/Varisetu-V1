@@ -28,7 +28,7 @@ export default function ProfileMenu() {
 
   const displayName = user?.name || profile?.fullName || 'User';
   const initial = displayName[0]?.toUpperCase() || '?';
-  const roleId = (typeof role === 'string' ? role : role?.id) || 'pilgrim';
+  const roleId = role || 'pilgrim';
   const roleLabel = { pilgrim: 'Pilgrim', volunteer: 'Volunteer', medical: 'Medical', police: 'Controller', municipality: 'Municipality' }[roleId] || 'Pilgrim';
 
   const handleLogout = () => {

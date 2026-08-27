@@ -1,7 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
-import { ArrowRightIcon, ArrowTrendingDownIcon, BoltIcon, CheckCircleIcon, ClockIcon, MapPinIcon, SpeakerWaveIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, ArrowTrendingDownIcon, BoltIcon, CheckCircleIcon, ClockIcon, MapPinIcon, SpeakerWaveIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
@@ -9,6 +8,7 @@ import Badge from '../../components/common/Badge';
 import RouteMap from '../../components/maps/RouteMap';
 import Timeline from '../../components/common/Timeline';
 import { useApp } from '../../context/AppContext';
+import { routeAdvisorService } from '../../services/routeAdvisorService';
 import { cn } from '../../utils/format';
 
 const DEFAULT_STOPS = [
@@ -23,6 +23,16 @@ export default function NavigationPage() {
   const { t } = useTranslation();
   const { activeDemo, simulation, routes, routeRecommendation, aiRouteRec, weather, aiPressure, locationPermission } = useApp();
   const [selectedRoute, setSelectedRoute] = useState('recommended');
+  const [originQuery, setOriginQuery] = useState('');
+  const [destQuery, setDestQuery] = useState('');
+  const [originResults, setOriginResults] = useState([]);
+  const [destResults, setDestResults] = useState([]);
+  const [originSelected, setOriginSelected] = useState(null);
+  const [destSelected, setDestSelected] = useState(null);
+  const [routeResult, setRouteResult] = useState(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+  const [showDestDropdown, setShowDestDropdown] = useState(false);
   const isSimRunning = activeDemo === 'crowd-simulation';
   const risk = aiPressure?.riskScore ?? simulation.riskScore;
 
@@ -83,6 +93,62 @@ export default function NavigationPage() {
   }, [routes, rec]);
 
   const summaryRisk = rec?.recommended?.computedRisk || (isSimRunning ? simulation.routeRisk : t('common.low'));
+
+  // Arbitrary location search handlers
+  const handleOriginSearch = useCallback(async (q) => {
+    setOriginQuery(q);
+    if (q.length < 3) { setOriginResults([]); return; }
+    const results = await routeAdvisorService.geocode(q);
+    setOriginResults(results);
+    setShowOriginDropdown(true);
+  }, []);
+
+  const handleDestSearch = useCallback(async (q) => {
+    setDestQuery(q);
+    if (q.length < 3) { setDestResults([]); return; }
+    const results = await routeAdvisorService.geocode(q);
+    setDestResults(results);
+    setShowDestDropdown(true);
+  }, []);
+
+  const handleFindRoute = async () => {
+    if (!originSelected || !destSelected) {
+      toast.error('Select both origin and destination from the suggestions.');
+      return;
+    }
+    setRouteLoading(true);
+    setRouteResult(null);
+    try {
+      const result = await routeAdvisorService.getRoute(
+        [originSelected.lat, originSelected.lng],
+        [destSelected.lat, destSelected.lng],
+        { originName: originSelected.name, destinationName: destSelected.name },
+      );
+      setRouteResult(result);
+      if (result.error) {
+        toast.error(`Routing failed: ${result.error}`);
+      } else {
+        toast.success(`Route found: ${result.distanceKm} km, ~${result.durationMin} min walk`);
+      }
+    } catch (err) {
+      toast.error('Failed to compute route');
+    } finally {
+      setRouteLoading(false);
+    }
+  };
+
+  const handleQuickLocate = async () => {
+    if (!navigator.geolocation) { toast.error('GPS not available'); return; }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const addr = await routeAdvisorService.reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        setOriginSelected({ lat: pos.coords.latitude, lng: pos.coords.longitude, name: addr });
+        setOriginQuery(addr.split(',')[0]);
+        toast.success('Current location set as origin');
+      },
+      () => toast.error('Could not get your location'),
+    );
+  };
   const summaryRiskColorClass = summaryRisk === 'CRITICAL'
     ? 'text-red-600'
     : summaryRisk === 'HIGH'
@@ -157,6 +223,175 @@ export default function NavigationPage() {
             />
           </div>
         </aside>
+      </section>
+
+      {/* AI Route Advisor — arbitrary location search */}
+      <section className="mt-6">
+        <article className="surface p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow">AI Route Advisor</p>
+              <h2 className="text-lg font-bold text-ink">Find route from any location</h2>
+              <p className="mt-1 text-sm text-slate-500">Enter any origin and destination. Uses real OpenStreetMap routing data.</p>
+            </div>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-ink/5 text-ink">
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {/* Origin */}
+            <div className="relative">
+              <label className="label">Starting point</label>
+              <div className="mt-2 flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 pl-9 text-sm text-ink focus:border-forest focus:ring-2 focus:ring-emerald-100 outline-none"
+                    placeholder="e.g. Pune Railway Station"
+                    value={originQuery}
+                    onChange={(e) => handleOriginSearch(e.target.value)}
+                    onFocus={() => setShowOriginDropdown(true)}
+                  />
+                  <MapPinIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  {originQuery && (
+                    <button onClick={() => { setOriginQuery(''); setOriginSelected(null); setOriginResults([]); }} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <button onClick={handleQuickLocate} className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-forest hover:bg-emerald-50" title="Use my current location">
+                  <MapPinIcon className="h-4 w-4" />
+                </button>
+              </div>
+              {showOriginDropdown && originResults.length > 0 && (
+                <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                  {originResults.map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setOriginSelected(r); setOriginQuery(r.name.split(',')[0]); setShowOriginDropdown(false); setOriginResults([]); }}
+                      className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                    >
+                      <MapPinIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate text-ink">{r.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {originSelected && (
+                <p className="mt-1.5 text-[11px] font-semibold text-forest">{originSelected.name.split(',').slice(0, 2).join(',')}</p>
+              )}
+            </div>
+
+            {/* Destination */}
+            <div className="relative">
+              <label className="label">Destination</label>
+              <div className="mt-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 pl-9 text-sm text-ink focus:border-forest focus:ring-2 focus:ring-emerald-100 outline-none"
+                    placeholder="e.g. Saswad Wari Camp"
+                    value={destQuery}
+                    onChange={(e) => handleDestSearch(e.target.value)}
+                    onFocus={() => setShowDestDropdown(true)}
+                  />
+                  <MapPinIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  {destQuery && (
+                    <button onClick={() => { setDestQuery(''); setDestSelected(null); setDestResults([]); }} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                      <XMarkIcon className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+              {showDestDropdown && destResults.length > 0 && (
+                <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                  {destResults.map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setDestSelected(r); setDestQuery(r.name.split(',')[0]); setShowDestDropdown(false); setDestResults([]); }}
+                      className="flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                    >
+                      <MapPinIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <span className="truncate text-ink">{r.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {destSelected && (
+                <p className="mt-1.5 text-[11px] font-semibold text-forest">{destSelected.name.split(',').slice(0, 2).join(',')}</p>
+              )}
+            </div>
+          </div>
+
+          <Button
+            variant="primary"
+            icon={MagnifyingGlassIcon}
+            onClick={handleFindRoute}
+            disabled={routeLoading || !originSelected || !destSelected}
+            className="mt-4"
+          >
+            {routeLoading ? 'Computing route...' : 'Find Walking Route'}
+          </Button>
+
+          {/* Route result */}
+          {routeResult && !routeResult.error && (
+            <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="eyebrow !text-emerald-700">Computed Route</p>
+                  <h3 className="mt-1 text-base font-bold text-ink">
+                    {routeResult.origin?.address?.split(',').slice(0, 2).join(',')} → {routeResult.destination?.address?.split(',').slice(0, 2).join(',')}
+                  </h3>
+                </div>
+                <Badge tone="green">Live OSRM Data</Badge>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-xl bg-white p-3">
+                  <p className="text-xl font-bold text-ink">{routeResult.distanceKm} km</p>
+                  <p className="label mt-1">Distance</p>
+                </div>
+                <div className="rounded-xl bg-white p-3">
+                  <p className="text-xl font-bold text-ink">{routeResult.durationMin} min</p>
+                  <p className="label mt-1">Walking time</p>
+                </div>
+                <div className="rounded-xl bg-white p-3">
+                  <p className="text-xl font-bold text-ink">{routeResult.steps?.length || 0}</p>
+                  <p className="label mt-1">Turns</p>
+                </div>
+              </div>
+
+              {routeResult.steps?.length > 0 && (
+                <div className="mt-4 max-h-48 space-y-1.5 overflow-y-auto">
+                  {routeResult.steps.slice(0, 10).map((step, i) => (
+                    <div key={i} className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-xs">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">{i + 1}</span>
+                      <span className="flex-1 text-slate-600">{step.instruction}</span>
+                      <span className="shrink-0 font-semibold text-slate-400">{step.distance}m</span>
+                    </div>
+                  ))}
+                  {routeResult.steps.length > 10 && (
+                    <p className="text-center text-[11px] text-slate-400">+ {routeResult.steps.length - 10} more steps</p>
+                  )}
+                </div>
+              )}
+
+              {routeResult.aiAnalysis && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-white p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-amber-700">AI Route Analysis</p>
+                  <p className="mt-2 text-sm leading-5 text-slate-700 whitespace-pre-line">{routeResult.aiAnalysis}</p>
+                  <p className="mt-2 text-[10px] text-slate-400">Powered by LLM · Advisory only</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {routeResult?.error && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {routeResult.error}
+            </div>
+          )}
+        </article>
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_.9fr]">

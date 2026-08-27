@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, User, Radio, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useApp } from '../../context/AppContext';
 import { getHomeRoute } from '../../routes/roleRoutes';
 import AuthLayout from './AuthLayout';
 
@@ -28,13 +27,12 @@ const roles = [
 export default function SelectRolePage() {
   const navigate = useNavigate();
   const { selectRole, role } = useAuth();
-  const { setSelectedRole } = useApp();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (role) {
-      navigate(getHomeRoute(typeof role === 'string' ? role : role.id), { replace: true });
+      navigate(getHomeRoute(role), { replace: true });
     }
   }, [role, navigate]);
 
@@ -42,8 +40,7 @@ export default function SelectRolePage() {
     if (!selected) return;
     setLoading(true);
     await new Promise((r) => setTimeout(r, 500));
-    selectRole(selected);
-    setSelectedRole(selected.label);
+    selectRole(selected.id);
     setLoading(false);
     navigate(getHomeRoute(selected.id));
   };

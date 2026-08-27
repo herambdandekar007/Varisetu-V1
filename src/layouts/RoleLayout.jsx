@@ -25,7 +25,7 @@ export default function RoleLayout() {
   const location = useLocation();
   const { role } = useAuth();
   const { isAccessibilityMode } = useApp();
-  const roleId = (typeof role === 'string' ? role : role?.id) || 'pilgrim';
+  const roleId = role || 'pilgrim';
   const SidebarComponent = sidebarMap[roleId] || PilgrimSidebar;
 
   return (

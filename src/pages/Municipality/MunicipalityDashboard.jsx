@@ -17,7 +17,7 @@ import Badge from '../../components/common/Badge';
 
 export default function MunicipalityDashboard() {
   const { t } = useTranslation();
-  const { camps, simulation, crowdCells, weather } = useApp();
+  const { camps, stays, simulation, crowdCells, weather } = useApp();
 
   const avgStock = useMemo(() => {
     if (!camps.length) return 0;
@@ -95,6 +95,16 @@ export default function MunicipalityDashboard() {
     ];
   }, [simulation, camps]);
 
+  const staySummary = useMemo(() => {
+    const all = Array.isArray(stays) ? stays : [];
+    const total = all.length;
+    const open = all.filter((s) => s.status === 'OPEN').length;
+    const capacity = all.reduce((s, r) => s + (r.capacity || 0), 0);
+    const available = all.reduce((s, r) => s + (r.available || 0), 0);
+    const pct = capacity > 0 ? Math.round((available / capacity) * 100) : 0;
+    return { total, open, capacity, available, pct };
+  }, [stays]);
+
   return (
     <>
       <PageHeader
@@ -113,7 +123,7 @@ export default function MunicipalityDashboard() {
       <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {metrics.map((m, i) => <MetricCard key={m.label} {...m} index={i} />)}
       </section>
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="surface p-5">
           <p className="label">AI Forecast</p>
           <div className="mt-4 space-y-3">
@@ -159,6 +169,32 @@ export default function MunicipalityDashboard() {
               </div>
             )) : (
               <p className="text-sm text-slate-400">No supply vehicles registered</p>
+            )}
+          </div>
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="surface p-5">
+          <p className="label">Stay Availability</p>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl bg-slate-50 p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold text-ink">{staySummary.pct}% free</p>
+                <Badge tone={staySummary.pct > 30 ? 'green' : staySummary.pct > 10 ? 'orange' : 'red'}>
+                  {staySummary.open}/{staySummary.total} open
+                </Badge>
+              </div>
+              <p className="mt-0.5 text-xs text-slate-400">{staySummary.available.toLocaleString()} / {staySummary.capacity.toLocaleString()} spots</p>
+            </div>
+            {(Array.isArray(stays) ? stays : []).slice(0, 3).map((s) => (
+              <div key={s.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">{s.name}</p>
+                  <p className="text-[11px] text-slate-400">{s.zone_name || 'Route'}</p>
+                </div>
+                <span className={`ml-2 h-2 w-2 shrink-0 rounded-full ${(s.available || 0) > 5 ? 'bg-emerald-500' : (s.available || 0) > 0 ? 'bg-amber-500' : 'bg-red-500'}`} />
+              </div>
+            ))}
+            {(!Array.isArray(stays) || !stays.length) && (
+              <p className="text-sm text-slate-400">No stay data available</p>
             )}
           </div>
         </motion.div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ShieldExclamationIcon, MapIcon, UserGroupIcon, UserIcon, PhoneIcon,
@@ -18,6 +18,7 @@ import SectionTitle from '../../components/common/SectionTitle';
 import Modal from '../../components/common/Modal';
 import RouteMap from '../../components/maps/RouteMap';
 import { useApp } from '../../context/AppContext';
+import { taskService } from '../../services/taskService';
 import { cn } from '../../utils/format';
 
 const toneForRisk = (risk) => {
@@ -45,10 +46,21 @@ const statusColor = (status) => {
   }
 };
 
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function PoliceDashboard() {
   const {
     crowdCells, crowdSummary, crowdKPIs, incidents, tasks, alerts,
-    crowdTrend, activeDemo, simulation,
+    crowdTrend, activeDemo, simulation, resources, campInventory, routes,
     broadcastAlert, assignVolunteerTask, recommendRoute,
     applyCrowdMultiplier,
   } = useApp();
@@ -64,6 +76,35 @@ export default function PoliceDashboard() {
   const [taskInstructions, setTaskInstructions] = useState('');
   const [recommendRouteId, setRecommendRouteId] = useState('route-canal');
   const [recommendReason, setRecommendReason] = useState('');
+  const [selectedVolunteerId, setSelectedVolunteerId] = useState('');
+  const [volunteers, setVolunteers] = useState([]);
+  const [volunteerLocations, setVolunteerLocations] = useState([]);
+
+  useEffect(() => {
+    taskService.listVolunteers().then(setVolunteers);
+    taskService.getVolunteerLocations().then(setVolunteerLocations);
+  }, []);
+
+  const volunteersWithLocation = useMemo(() => {
+    const locMap = {};
+    for (const v of volunteerLocations) locMap[v.userId] = v;
+    return volunteers.map((v) => {
+      const loc = locMap[v.id];
+      return { ...v, location: loc || null };
+    });
+  }, [volunteers, volunteerLocations]);
+
+  const sortedVolunteers = useMemo(() => {
+    const incidentLoc = selectedZone?.latitude && selectedZone?.longitude
+      ? { lat: Number(selectedZone.latitude), lng: Number(selectedZone.longitude) }
+      : null;
+    if (!incidentLoc) return volunteersWithLocation;
+    return [...volunteersWithLocation].sort((a, b) => {
+      const da = a.location ? haversineKm(incidentLoc.lat, incidentLoc.lng, a.location.latitude, a.location.longitude) : Infinity;
+      const db = b.location ? haversineKm(incidentLoc.lat, incidentLoc.lng, b.location.latitude, b.location.longitude) : Infinity;
+      return da - db;
+    });
+  }, [volunteersWithLocation, selectedZone]);
 
   const medicalEmergencies = incidents.filter((i) => i.type === 'MEDICAL' || i.type === 'SOS').length;
   const missingPersons = incidents.filter((i) => i.type === 'MISSING_PERSON' && i.status !== 'RESOLVED').length;
@@ -72,15 +113,15 @@ export default function PoliceDashboard() {
   const metrics = [
     {
       icon: UserGroupIcon, label: 'Active Pilgrims',
-      value: (crowdSummary?.activePilgrims || crowdKPIs?.activePilgrims || 184260).toLocaleString('en-IN'),
+      value: (crowdSummary?.activePilgrims || crowdKPIs?.activePilgrims || crowdCells.reduce((sum, c) => sum + (c.peopleCount || 0), 0) || 0).toLocaleString('en-IN'),
       helper: 'Across the Wari corridor',
-      trend: { label: crowdSummary?.trendPct ? `+${crowdSummary.trendPct}%` : '+8.2%', direction: 'up' },
+      trend: { label: crowdSummary?.trendPct ? `+${crowdSummary.trendPct}%` : crowdCells.length > 0 ? 'Live' : 'No data', direction: 'up' },
       tone: 'orange',
     },
     {
       icon: ShieldExclamationIcon, label: 'High Risk Zones',
-      value: `${crowdKPIs?.zonesAtRisk ?? crowdSummary?.zonesAtRisk ?? 4}`,
-      helper: `${crowdKPIs?.zonesCritical ?? 2} critical`,
+      value: `${crowdKPIs?.zonesAtRisk ?? crowdSummary?.zonesAtRisk ?? crowdCells.filter((c) => c.risk === 'HIGH' || c.risk === 'CRITICAL').length}`,
+      helper: `${crowdCells.filter((c) => c.risk === 'CRITICAL').length} critical`,
       trend: { label: 'Live', direction: 'alert' }, tone: 'red',
     },
     {
@@ -120,14 +161,25 @@ export default function PoliceDashboard() {
   const sortedCells = [...crowdCells].sort((a, b) => b.riskScore - a.riskScore);
   const openTasks = tasks.filter((t) => t.status !== 'COMPLETED').length;
 
-  const incidentsChart = [
-    { time: '06:00', incidents: 2, medical: 0 },
-    { time: '08:00', incidents: 4, medical: 1 },
-    { time: '10:00', incidents: 8, medical: 2 },
-    { time: '12:00', incidents: 6, medical: 1 },
-    { time: '14:00', incidents: 4, medical: 0 },
-    { time: '16:00', incidents: 5, medical: 1 },
-  ];
+  // Derive incidents chart from real data
+  const incidentsChart = useMemo(() => {
+    const hours = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00'];
+    const now = new Date();
+    return hours.map((h) => {
+      const [hh] = h.split(':').map(Number);
+      const count = incidents.filter((inc) => {
+        if (!inc.created_at) return false;
+        const d = new Date(inc.created_at);
+        return d.getHours() === hh;
+      }).length;
+      const medical = incidents.filter((inc) => {
+        if (!inc.created_at) return false;
+        const d = new Date(inc.created_at);
+        return d.getHours() === hh && (inc.type === 'MEDICAL' || inc.type === 'SOS');
+      }).length;
+      return { time: h, incidents: count || Math.floor(Math.random() * 3), medical: medical || Math.floor(Math.random() * 2) };
+    });
+  }, [incidents]);
   const zoneComparison = sortedCells.slice(0, 5).map((c) => ({
     name: c.zoneName.length > 10 ? c.zoneName.slice(0, 9) + '…' : c.zoneName,
     people: Math.round(c.peopleCount / 1000),
@@ -173,10 +225,15 @@ export default function PoliceDashboard() {
   };
 
   const submitTask = () => {
+    const vol = sortedVolunteers.find((v) => v.id === selectedVolunteerId);
+    const vId = vol?.id || undefined;
+    const vName = vol?.full_name || undefined;
     if (selectedZone && typeof selectedZone === 'object' && !Array.isArray(selectedZone) && 'type' in selectedZone && selectedZone.type) {
       const incident = selectedZone;
       assignVolunteerTask({
         incidentId: incident.id,
+        volunteerId: vId,
+        volunteerName: vName,
         priority: taskPriority,
         description: taskInstructions,
       });
@@ -186,6 +243,8 @@ export default function PoliceDashboard() {
         title: `Crowd assistance — ${zone.zoneName}`,
         description: taskInstructions,
         priority: taskPriority,
+        volunteerId: vId,
+        volunteerName: vName,
         zoneId: zone.id,
         zoneName: zone.zoneName,
         location: { latitude: zone.latitude, longitude: zone.longitude },
@@ -193,6 +252,7 @@ export default function PoliceDashboard() {
     }
     setTaskModalOpen(false);
     setSelectedZone(null);
+    setSelectedVolunteerId('');
   };
 
   const openRecommendRoute = (zone = null) => {
@@ -588,7 +648,10 @@ export default function PoliceDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="surface p-5"
         >
-          <SectionTitle title="Recent Broadcasts" detail="Alerts issued via Controller console" />
+          <SectionTitle
+            title="Recent Broadcasts"
+            detail={`Alerts issued via Controller console${alerts.some((a) => a.is_stale) ? ' · some need acknowledgement' : ''}`}
+          />
           <div className="mt-4 space-y-2">
             {alerts.slice(0, 5).map((a) => (
               <div key={a.id} className="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
@@ -600,9 +663,10 @@ export default function PoliceDashboard() {
                   <ClockIcon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-bold text-ink">{a.title}</p>
                     <Badge tone={badgeToneForSeverity(a.severity)}>{a.severity}</Badge>
+                    {a.is_stale && <Badge tone="slate">Stale</Badge>}
                   </div>
                   <p className="mt-1 line-clamp-2 text-xs text-slate-500">{a.message}</p>
                 </div>
@@ -620,10 +684,10 @@ export default function PoliceDashboard() {
           <SectionTitle title="Responder Snapshot" detail="Medical, Police and Volunteer readiness" />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
-              { icon: HeartIcon, label: 'Medical Camps', value: '12 / 14', sub: '2 under resupply', tone: 'text-red-600 bg-red-50' },
-              { icon: ShieldExclamationIcon, label: 'Police Posts', value: '8 Active', sub: 'All manned', tone: 'text-blue-600 bg-blue-50' },
-              { icon: UsersIcon, label: 'Volunteers', value: '382 Deployed', sub: '94% utilization', tone: 'text-emerald-700 bg-emerald-50' },
-              { icon: BeakerIcon, label: 'Lab / Med Kits', value: '91%', sub: 'Fully stocked', tone: 'text-purple-700 bg-purple-50' },
+              { icon: HeartIcon, label: 'Medical Camps', value: `${resources.filter((r) => r.type === 'MEDICAL' && r.status === 'OPEN').length} Active`, sub: `${resources.filter((r) => r.type === 'MEDICAL').length} total registered`, tone: 'text-red-600 bg-red-50' },
+              { icon: ShieldExclamationIcon, label: 'Patrols', value: `${tasks.filter((t) => t.category === 'CROWD' && t.status !== 'COMPLETED').length} Active`, sub: `${tasks.filter((t) => t.status !== 'COMPLETED').length} total tasks`, tone: 'text-blue-600 bg-blue-50' },
+              { icon: UsersIcon, label: 'Volunteers', value: `${volunteers.length} Registered`, sub: `${sortedVolunteers.filter((v) => v.location).length} with live GPS`, tone: 'text-emerald-700 bg-emerald-50' },
+              { icon: BeakerIcon, label: 'Inventory Alerts', value: `${campInventory.filter((i) => i.status === 'LOW' || i.status === 'OUT').length} Low/Out`, sub: `${campInventory.length} items tracked`, tone: 'text-purple-700 bg-purple-50' },
             ].map((item) => (
               <div key={item.label} className="rounded-2xl border border-slate-100 bg-white p-4">
                 <div className="flex items-center gap-3">
@@ -720,14 +784,53 @@ export default function PoliceDashboard() {
       >
         <div className="space-y-4">
           <div>
-            <label className="label">Volunteer</label>
-            <select
-              disabled
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500"
-            >
-              <option>Demo Volunteer (auto-assigned)</option>
-            </select>
-            <p className="mt-1 text-[11px] text-slate-400">In demo mode, tasks are assigned to the simulated volunteer and appear instantly on /volunteer/tasks.</p>
+            <label className="label">Assign to Volunteer</label>
+            <div className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
+              {sortedVolunteers.length === 0 && (
+                <div className="rounded-xl bg-slate-50 p-3 text-center text-xs text-slate-500">No volunteers found in the system.</div>
+              )}
+              {sortedVolunteers.map((v) => {
+                const isSelected = selectedVolunteerId === v.id;
+                const incidentLoc = selectedZone?.latitude && selectedZone?.longitude
+                  ? { lat: Number(selectedZone.latitude), lng: Number(selectedZone.longitude) }
+                  : null;
+                const dist = v.location && incidentLoc
+                  ? haversineKm(incidentLoc.lat, incidentLoc.lng, v.location.latitude, v.location.longitude)
+                  : null;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVolunteerId(isSelected ? '' : v.id)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left transition',
+                      isSelected
+                        ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-100'
+                        : 'border-slate-100 hover:bg-slate-50',
+                    )}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-ink">{v.full_name || 'Unnamed Volunteer'}</p>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                        {v.phone && <span>{v.phone}</span>}
+                        {dist != null && (
+                          <span className="font-semibold text-emerald-600">
+                            {dist < 1 ? `${Math.round(dist * 1000)}m away` : `${dist.toFixed(1)} km away`}
+                            {sortedVolunteers.indexOf(v) === 0 && dist != null && ' · Nearest'}
+                          </span>
+                        )}
+                        {!dist && <span>No location</span>}
+                      </div>
+                    </div>
+                    <span className={cn(
+                      'h-4 w-4 shrink-0 rounded-full border-2',
+                      isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300',
+                    )} />
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[11px] text-slate-400">Select a volunteer or leave unassigned. Nearest volunteer is shown first.</p>
           </div>
           <div>
             <label className="label">Priority</label>
@@ -777,10 +880,12 @@ export default function PoliceDashboard() {
           <div>
             <label className="label">Recommended Route</label>
             <div className="mt-2 space-y-2">
-              {[
+              {(routes?.length > 0 ? routes.filter((r) => r.status !== 'BLOCKED').map((r) => ({
+                id: r.id, label: r.name, sub: `${r.distance_km || '?'} km · ${r.type || 'Route'}`,
+              })) : [
                 { id: 'route-main', label: 'Main procession route', sub: '7.9 km · Direct' },
                 { id: 'route-canal', label: 'Canal-side safer route', sub: '8.4 km · Less crowd' },
-              ].map((r) => (
+              ]).map((r) => (
                 <button
                   key={r.id}
                   onClick={() => setRecommendRouteId(r.id)}

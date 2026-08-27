@@ -26,7 +26,7 @@ export default function TopBar() {
   const { t } = useTranslation();
   const { setIsNotificationOpen } = useApp();
   const { role } = useAuth();
-  const roleId = (typeof role === 'string' ? role : role?.id) || 'pilgrim';
+  const roleId = role || 'pilgrim';
   const roleLabel = roleBadgeLabels[roleId] || 'Pilgrim';
 
   return (

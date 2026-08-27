@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   HomeIcon, ShieldExclamationIcon, MapIcon, PhoneIcon,
   BoltIcon, ExclamationTriangleIcon, SignalIcon, UsersIcon, HeartIcon,
-  ArrowPathIcon,
+  ArrowPathIcon, MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
@@ -20,15 +20,15 @@ const crowdItems = [
 ];
 
 const operationsItems = [
-  { label: 'Incidents', to: '/analytics', icon: ExclamationTriangleIcon },
   { label: 'Emergency Calls', to: '/controller/emergency', icon: PhoneIcon },
-  { label: 'Volunteers', to: '/controller/patrols', icon: UsersIcon },
-  { label: 'Medical Resources', to: '/controller/barricades', icon: HeartIcon },
+  { label: 'Patrols', to: '/controller/patrols', icon: UsersIcon },
+  { label: 'Barricades', to: '/controller/barricades', icon: HeartIcon },
+  { label: 'Lost Persons', to: '/controller/lost-persons', icon: MagnifyingGlassIcon },
 ];
 
 const decisionItems = [
   { label: 'Route Management', to: '/navigation', icon: ArrowPathIcon },
-  { label: 'Broadcast Alerts', to: '/analytics', icon: SignalIcon },
+  { label: 'Broadcast Alerts', to: '/controller/dashboard', icon: SignalIcon },
 ];
 
 export default function PoliceSidebar() {
