@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 920" fill="none">
+  <!-- VITTHAL MAULI SILHOUETTE - EXACT MATCH TO USER IMAGE -->
+  <g transform="translate(300, 50)">
+
+    <!-- 1. TOP CROWN SPIRE (finial) -->
+    <path d="M-10 8 L-6 -15 L0 -40 L6 -15 L10 8 Z" fill="#1A1A1A" />
+    <circle cx="0" cy="-48" r="8" fill="#1A1A1A" />
+    <path d="M0 -65 L0 -42" stroke="#1A1A1A" stroke-width="6" stroke-linecap="round" />
+    <path d="M0 -65 L-11 -44 L0 -48 L11 -44 Z" fill="#1A1A1A" />
+    <ellipse cx="0" cy="5" rx="20" ry="8" fill="#1A1A1A" />
+
+    <!-- 2. CROWN BANDS (two tiers) -->
+    <ellipse cx="0" cy="25" rx="42" ry="10" fill="#1A1A1A" />
+    <ellipse cx="0" cy="48" rx="55" ry="12" fill="#1A1A1A" />
+
+    <!-- 3. HEAD -->
+    <ellipse cx="0" cy="110" rx="60" ry="65" fill="#1A1A1A" />
+
+    <!-- 4. EARRINGS - CURVED CRESCENTS (exact shape!) -->
+    <g fill="#1A1A1A">
+      <!-- Left earring -->
+      <path d="M-60 130 
+               C-85 134 -96 155 -95 178 
+               C-94 200 -80 210 -65 198 
+               C-72 180 -75 160 -60 145 Z" />
+      <path d="M-60 130 
+               C-92 124 -108 148 -88 170 
+               C-82 166 -68 156 -60 140 Z" />
+      <!-- Right earring -->
+      <path d="M60 130 
+               C85 134 96 155 95 178 
+               C94 200 80 210 65 198 
+               C72 180 75 160 60 145 Z" />
+      <path d="M60 130 
+               C92 124 108 148 88 170 
+               C82 166 68 156 60 140 Z" />
+    </g>
+
+    <!-- 5. TILAK (ORANGE PIN WITH WHITE DOT) -->
+    <g transform="translate(0, 88)">
+      <path d="M0 -55 
+               C-16 -32 -16 0 0 30 
+               C16 0 16 -32 0 -55 Z" 
+            fill="#FF8C00" />
+      <circle cx="0" cy="-16" r="7" fill="#FFFFFF" />
+    </g>
+
+    <!-- 6. NECK -->
+    <rect x="-25" y="172" width="50" height="40" rx="9" fill="#1A1A1A" />
+
+    <!-- 7. TORSO + ARMS (with HANDS WHITE CUTOUTS) -->
+    <path d="M-145 250 
+             C-130 208 -92 195 -68 224 
+             C-55 213 -28 210 0 210 
+             C28 210 55 213 68 224 
+             C92 195 130 208 145 250 
+             L160 380 
+             C167 415 152 438 128 445 
+             L-128 445 
+             C-152 438 -167 415 -160 380 Z" 
+          fill="#1A1A1A" />
+
+    <!-- WHITE HAND CUTOUTS (IMPORTANT! - THESE ARE VISIBLE IN YOUR IMAGE!) -->
+    <!-- Left hand cutout (white triangle) -->
+    <path d="M-115 285 
+             C-94 300 -80 325 -65 348 
+             L-92 385 
+             C-120 365 -138 335 -138 308 
+             C-138 295 -128 287 -115 285 Z" 
+          fill="#ECECEC" />
+    <!-- Right hand cutout (white triangle) -->
+    <path d="M115 285 
+             C94 300 80 325 65 348 
+             L92 385 
+             C120 365 138 335 138 308 
+             C138 295 128 287 115 285 Z" 
+          fill="#ECECEC" />
+
+    <!-- 8. WAISTBAND -->
+    <rect x="-132" y="440" width="264" height="26" rx="3" fill="#1A1A1A" />
+    <rect x="-132" y="462" width="264" height="8" rx="2" fill="#222" />
+
+    <!-- 9. LOWER GARMENT (two parts - upper flared, lower bulbous) -->
+    <!-- PART 1 - UPPER FLARED -->
+    <path d="M-125 475 
+             L-98 615 
+             L98 615 
+             L125 475 Z" 
+          fill="#1A1A1A" />
+    <!-- PART 2 - LOWER BULBOUS -->
+    <path d="M-98 615 
+             C-100 660 -92 705 -72 740 
+             L-38 740 
+             C-50 700 -55 660 -58 620 
+             C-40 685 -30 730 -15 790 
+             L15 790 
+             C30 730 40 685 58 620 
+             C55 660 50 700 38 740 
+             L72 740 
+             C92 705 100 660 98 615 Z" 
+          fill="#1A1A1A" />
+
+    <!-- 10. LEGS (two vertical pillars) -->
+    <rect x="-50" y="785" width="32" height="120" rx="5" fill="#1A1A1A" />
+    <rect x="18" y="785" width="32" height="120" rx="5" fill="#1A1A1A" />
+
+    <!-- 11. FEET - SMALL ROUNDED BASE (no temples!) -->
+    <ellipse cx="0" cy="918" rx="108" ry="24" fill="#1A1A1A" />
+  </g>
+</svg>

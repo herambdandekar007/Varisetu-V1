@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  color: #15201A;
+  background: #F6F8F7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; background: #F6F8F7; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+::selection { background: rgba(255, 122, 0, 0.2); color: #15201A; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* Utility classes */
+.serif { font-family: 'Playfair Display', Georgia, serif; }
+
+.surface {
+  @apply rounded-3xl border border-slate-100 bg-white shadow-card;
+}
+
+.surface-muted {
+  @apply rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl;
+}
+
+.surface-hover {
+  @apply rounded-3xl border border-slate-100 bg-white shadow-card transition-shadow duration-300 hover:shadow-card-hover;
+}
+
+.eyebrow {
+  @apply mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-forest;
+}
+
+.page-title {
+  @apply text-3xl font-bold tracking-tight text-ink sm:text-4xl;
+}
+
+.label {
+  @apply text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400;
+}
+
+/* Focus ring */
+.focus-ring {
+  @apply outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-saffron-200 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+}
+
+/* Skeleton base */
+.skeleton {
+  @apply animate-skeleton rounded-xl bg-slate-200;
+}
+
+/* Leaflet overrides */
+.leaflet-container { height: 100%; width: 100%; font-family: 'DM Sans', sans-serif; }
+.leaflet-control-attribution { display: none; }
+
+/* Custom Wari Map Markers */
+.wari-marker { background: none !important; border: none !important; }
+.wari-marker-inner {
+  display: grid; width: 36px; height: 36px; place-items: center;
+  border-radius: 50%; border: 2.5px solid white;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease;
+}
+.wari-marker-inner:hover { transform: scale(1.1); }
+
+/* Crowd markers */
+.wari-crowd-marker { background: none !important; border: none !important; }
+.wari-crowd-inner {
+  display: grid; border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.8);
+  box-shadow: 0 3px 14px rgba(0,0,0,0.25);
+  color: white; font-size: 9px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  transition: transform 0.2s ease;
+}
+.wari-crowd-inner:hover { transform: scale(1.12); }
+
+/* Popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important;
+}
+.leaflet-popup-content { margin: 14px 16px !important; font-family: 'DM Sans', sans-serif; }
+.leaflet-popup-tip { box-shadow: none !important; }
+.wari-popup { font-family: 'DM Sans', sans-serif; }
+
+.pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.75); opacity: 0.9; }
+  80%, 100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* Touch targets — minimum 44x44px for mobile */
+@media (pointer: coarse) {
+  button, a, select, input[type="checkbox"], input[type="radio"] {
+    min-height: 44px;
+  }
+  .nav-item { min-height: 44px; }
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .surface { @apply rounded-2xl; }
+  .page-title { @apply text-2xl; }
+}
+
+/* Accessibility mode */
+.accessibility-mode { font-size: 18px; line-height: 1.6; }
+.accessibility-mode * { letter-spacing: 0.01em; }
+.accessibility-mode .surface { border-width: 2px; border-color: #15201A; }
+.accessibility-mode button, 
+.accessibility-mode a, 
+.accessibility-mode select { min-height: 48px; }
+.accessibility-mode .label { font-size: 13px; }
