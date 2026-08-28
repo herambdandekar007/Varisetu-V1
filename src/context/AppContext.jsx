@@ -913,7 +913,6 @@ export function AppProvider({ children }) {
     simulateCampStress,
     simulateStayStress,
     healthSnapshots,
-    latestHealth,
     healthService,
     groupMembers,
     groupSeparationActive,
