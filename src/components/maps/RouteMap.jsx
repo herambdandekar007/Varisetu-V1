@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, useMap, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, Marker, CircleMarker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import DensityLayers from './DensityLayers';
@@ -13,6 +13,7 @@ import LiveStatusBar from './LiveStatusBar';
 import WariTimeline from './WariTimeline';
 import EmergencyActions from './EmergencyActions';
 import ResourceSummary from './ResourceSummary';
+import { createPilgrimIcon, createFamilyMemberIcon } from './markerIcons';
 import { useApp } from '../../context/AppContext';
 
 const defaultLayers = {
@@ -72,28 +73,12 @@ L.Icon.Default.mergeOptions({
 
 function PilgrimArrow({ position, heading, isSimulated }) {
   if (!position) return null;
-  const rotation = heading ?? 0;
   return (
-    <CircleMarker
-      center={position}
-      radius={10}
-      pathOptions={{
-        color: isSimulated ? '#F59E0B' : '#16A34A',
-        fillColor: isSimulated ? '#F59E0B' : '#16A34A',
-        fillOpacity: 0.9,
-        weight: 3,
-        opacity: 1,
-      }}
-    >
-      <div
-        className="pointer-events-none flex h-5 w-5 items-center justify-center"
-        style={{ transform: `rotate(${rotation}deg)` }}
-      >
-        <svg viewBox="0 0 24 24" fill="white" className="h-3.5 w-3.5 drop-shadow-sm">
-          <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
-        </svg>
-      </div>
-    </CircleMarker>
+    <Marker
+      position={position}
+      icon={createPilgrimIcon(isSimulated)}
+      zIndexOffset={1000}
+    />
   );
 }
 
@@ -102,17 +87,10 @@ const FAMILY_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F97316', '#06B6D4'];
 function FamilyMarkers({ members }) {
   if (!members?.length) return null;
   return members.map((m, i) => (
-    <CircleMarker
+    <Marker
       key={m.id}
-      center={[m.lat, m.lng]}
-      radius={7}
-      pathOptions={{
-        color: FAMILY_COLORS[i % FAMILY_COLORS.length],
-        fillColor: FAMILY_COLORS[i % FAMILY_COLORS.length],
-        fillOpacity: 0.85,
-        weight: 2,
-        opacity: 1,
-      }}
+      position={[m.lat, m.lng]}
+      icon={createFamilyMemberIcon(FAMILY_COLORS[i % FAMILY_COLORS.length])}
     >
       <Popup>
         <div className="text-center">
@@ -122,7 +100,7 @@ function FamilyMarkers({ members }) {
           </p>
         </div>
       </Popup>
-    </CircleMarker>
+    </Marker>
   ));
 }
 

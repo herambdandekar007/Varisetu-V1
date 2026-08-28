@@ -1,14 +1,12 @@
-import { CircleMarker, Polyline } from 'react-leaflet';
-// The geometry passed in comes in the same shape as the mock data: an array
-// of `[lat, lng]` pairs.  When the component is used with the real OSRM
-// response, the caller must pre‑process the geometry to that shape.
-// If no geometry is supplied we fall back to the demo route.
+import { CircleMarker, Marker, Polyline } from 'react-leaflet';
 import { routeCoordinates } from '../../data/mockData';
+import { createRouteEndpointIcon } from './markerIcons';
 
 export default function RouteLine({ geometry = routeCoordinates }) {
-  // Make sure we have at least a minimal path – otherwise the polyline goal
-  // would fail silently.  A single point is not enough for a route.
   if (!geometry?.length) return null;
+
+  const startPoint = geometry[0];
+  const endPoint = geometry[geometry.length - 1];
 
   return (
     <>
@@ -21,15 +19,22 @@ export default function RouteLine({ geometry = routeCoordinates }) {
           lineCap: 'round',
         }}
       />
-      {geometry.map((latLng, index) => (
+      <Marker
+        position={startPoint}
+        icon={createRouteEndpointIcon(true)}
+      />
+      <Marker
+        position={endPoint}
+        icon={createRouteEndpointIcon(false)}
+      />
+      {geometry.slice(1, -1).map((latLng, index) => (
         <CircleMarker
           key={`${latLng[0]}-${latLng[1]}`}
           center={latLng}
-          radius={index === 0 || index === geometry.length - 1 ? 7 : 4}
+          radius={4}
           pathOptions={{
             color: '#fff',
-            fillColor:
-              index === geometry.length - 1 ? '#FF7A00' : '#008C45',
+            fillColor: '#008C45',
             fillOpacity: 1,
             weight: 3,
           }}

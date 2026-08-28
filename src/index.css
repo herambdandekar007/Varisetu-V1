@@ -78,6 +78,20 @@ a { color: inherit; text-decoration: none; }
 }
 .wari-marker-inner:hover { transform: scale(1.1); }
 
+/* Location pin markers */
+.wari-location-pin { background: none !important; border: none !important; }
+.wari-pin-inner {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2.5px solid white;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+  transition: transform 0.15s ease;
+}
+.wari-pin-inner svg { transform: rotate(45deg); }
+.wari-pin-inner:hover { transform: rotate(-45deg) scale(1.12); }
+.wari-pin-sm { width: 22px; height: 22px; }
+
 /* Crowd markers */
 .wari-crowd-marker { background: none !important; border: none !important; }
 .wari-crowd-inner {
