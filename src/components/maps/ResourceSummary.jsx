@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XMarkIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PhoneIcon, MapPinIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { useApp } from '../../context/AppContext';
 import { campService } from '../../services/campService';
 import { routeAdvisorService } from '../../services/routeAdvisorService';
@@ -27,6 +27,7 @@ export default function ResourceSummary() {
   const [resourcesByCategory, setResourcesByCategory] = useState({});
   const [selectedResource, setSelectedResource] = useState(null);
   const [routeToResource, setRouteToResource] = useState(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,39 +88,58 @@ export default function ResourceSummary() {
     setRouteToResource(null);
   }, []);
 
+  const loadedCount = RESOURCE_CATEGORIES.filter((cat) => resourcesByCategory[cat.id]).length;
+
   return (
     <>
-      <div className="absolute bottom-4 left-4 z-[500] flex flex-col gap-2">
-        {RESOURCE_CATEGORIES.map((cat, i) => {
-          const resource = resourcesByCategory[cat.id];
-          if (!resource) return null;
-          return (
-            <motion.button
-              key={cat.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => handleResourceClick(cat, resource)}
-              className="flex items-center gap-3 rounded-xl bg-white/95 p-2.5 shadow-lg backdrop-blur border border-slate-100 min-w-[170px] text-left transition hover:shadow-xl hover:border-slate-200 active:scale-[0.98]"
+      <div className="absolute bottom-4 left-4 z-[500] flex flex-col gap-1.5 max-h-[calc(100%-6rem)]">
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-2 rounded-xl bg-white/95 px-3 py-2 shadow-lg backdrop-blur border border-slate-100 text-[11px] font-bold text-ink hover:bg-white transition-colors"
+        >
+          <span>📍</span>
+          <span className="truncate">Nearby</span>
+          {expanded ? <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" /> : <ChevronUpIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
+        </button>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="flex flex-col gap-1.5 overflow-y-auto max-h-[50vh]"
             >
-              <div
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white text-sm"
-                style={{ background: cat.color }}
-              >
-                {cat.emoji}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-bold text-ink">{cat.label}</p>
-                  <span className="text-[10px] text-slate-400">
-                    {formatDistance(resource._distance)}
-                  </span>
-                </div>
-                <p className="truncate text-[10px] text-slate-500">{resource.name}</p>
-              </div>
-            </motion.button>
-          );
-        })}
+              {RESOURCE_CATEGORIES.map((cat) => {
+                const resource = resourcesByCategory[cat.id];
+                if (!resource) return null;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleResourceClick(cat, resource)}
+                    className="flex items-center gap-2.5 rounded-xl bg-white/95 p-2 shadow-lg backdrop-blur border border-slate-100 min-w-[160px] max-w-[200px] text-left transition hover:shadow-xl hover:border-slate-200 active:scale-[0.98]"
+                  >
+                    <div
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white text-xs"
+                      style={{ background: cat.color }}
+                    >
+                      {cat.emoji}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-bold text-ink truncate">{cat.label}</p>
+                        <span className="text-[9px] text-slate-400 shrink-0 ml-1">
+                          {formatDistance(resource._distance)}
+                        </span>
+                      </div>
+                      <p className="truncate text-[9px] text-slate-500">{resource.name}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <AnimatePresence>
@@ -136,7 +156,7 @@ export default function ResourceSummary() {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="fixed bottom-24 left-4 right-4 z-[601] max-w-sm rounded-2xl border border-slate-100 bg-white p-5 shadow-float"
+              className="fixed bottom-24 left-4 right-4 z-[601] max-w-sm mx-auto rounded-2xl border border-slate-100 bg-white p-5 shadow-float"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -146,12 +166,12 @@ export default function ResourceSummary() {
                   >
                     {selectedResource.category.emoji}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-ink">{selectedResource.name}</p>
-                    <p className="text-[11px] text-slate-500">{selectedResource.area || selectedResource.zone_name}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-ink truncate">{selectedResource.name}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{selectedResource.area || selectedResource.zone_name}</p>
                   </div>
                 </div>
-                <button onClick={handleClose} className="text-slate-400 hover:text-slate-600">
+                <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 shrink-0">
                   <XMarkIcon className="h-5 w-5" />
                 </button>
               </div>

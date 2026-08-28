@@ -36,6 +36,9 @@ export default function DeveloperMode() {
     groupSeparationActive,
     locationService,
     pilgrimLocation,
+    pilgrimCount,
+    setPilgrimCount,
+    resumePilgrimAutoIncrement,
   } = useApp();
   const navigate = useNavigate();
   const activeRole = role || 'pilgrim';
@@ -44,6 +47,7 @@ export default function DeveloperMode() {
   const [locResults, setLocResults] = useState([]);
   const [locSearching, setLocSearching] = useState(false);
   const [showLocDropdown, setShowLocDropdown] = useState(false);
+  const [pilgrimCountInput, setPilgrimCountInput] = useState('');
 
   const handleLocSearch = useCallback(async (q) => {
     setLocQuery(q);
@@ -381,6 +385,44 @@ const healthOptions = [
                     </button>
                   )}
                 </div>
+
+                <div className="space-y-3 border-t border-dashed border-slate-100 pt-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Pilgrims Today</p>
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                      {pilgrimCount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs text-ink focus:border-forest focus:ring-2 focus:ring-emerald-100 outline-none"
+                      placeholder="e.g. 200000"
+                      value={pilgrimCountInput}
+                      onChange={(e) => setPilgrimCountInput(e.target.value)}
+                    />
+                    <button
+                      onClick={() => {
+                        const val = parseInt(pilgrimCountInput, 10);
+                        if (val > 0) {
+                          setPilgrimCount(val);
+                          setPilgrimCountInput('');
+                        }
+                      }}
+                      disabled={!pilgrimCountInput}
+                      className="shrink-0 rounded-xl bg-forest px-3 py-2 text-[11px] font-bold text-white transition hover:bg-emerald-700 disabled:opacity-40"
+                    >
+                      Set
+                    </button>
+                  </div>
+                  <button
+                    onClick={resumePilgrimAutoIncrement}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-bold text-slate-600 transition hover:bg-slate-100"
+                  >
+                    Resume auto-increment
+                  </button>
+                </div>
+
               </div>
 
               <p className="mt-4 text-[10px] text-slate-300">Hidden in production builds</p>

@@ -131,7 +131,7 @@ export default function RouteMap({ mode = 'route', className = '' }) {
     <div className={`relative flex flex-col overflow-hidden rounded-2xl h-full ${className}`}>
       <WariTimeline />
       <LiveStatusBar />
-      <div className="relative flex-1">
+      <div className="relative flex-1 overflow-hidden">
         <MapContainer
           center={center}
           zoom={hasLocation ? 14 : 12}

@@ -227,20 +227,8 @@ export default function DashboardPage() {
             detail={activeDemo === 'crowd-simulation' ? 'Alandi to Saswad · Demo simulated guidance' : 'Alandi to Saswad · live guidance'}
             action={<Badge tone={recommendedId === 'route-main' ? 'green' : 'blue'} dot>{t('common.safe')}</Badge>}
           />
-          <div className="relative h-[340px] overflow-hidden rounded-2xl">
+          <div className="relative h-[480px] overflow-hidden rounded-2xl">
             <RouteMap mode="pilgrim" />
-            <div className="absolute right-4 top-4 z-[401] rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
-              <p className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">Route</p>
-              <p className="mt-1 text-lg font-bold text-ink">{mainRoute?.totalDistanceKm || 8.4} km <span className="text-sm text-slate-400">· {mainRoute?.estimatedDuration || '2h 18m'}</span></p>
-              {activeDemo === 'crowd-simulation' && (
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-600">Demo · Simulated Live</p>
-              )}
-            </div>
-            {(activeDemo === 'crowd-simulation' || (alerts && alerts.length > 0)) && (
-              <div className="absolute left-4 top-4 z-[401] rounded-2xl bg-ink/85 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-amber-300/80 shadow-lg backdrop-blur">
-                Demo · Simulated Live Data
-              </div>
-            )}
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className={cn('rounded-2xl p-3', riskColor(routeARisk))}>

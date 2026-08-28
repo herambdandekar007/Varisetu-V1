@@ -29,20 +29,21 @@ const items = [
 ];
 
 export default function MapLegend() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
-    <div className="absolute bottom-16 left-4 z-[400]">
+    <div className="absolute bottom-4 left-4 z-[400] max-h-[calc(100%-8rem)]">
       <motion.div
-        animate={{ width: collapsed ? 32 : 190 }}
+        animate={{ width: collapsed ? 36 : 190 }}
         className="rounded-xl border border-slate-100 bg-white/95 shadow-lg backdrop-blur overflow-hidden"
       >
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-between px-3 py-2 text-[10px] font-bold uppercase tracking-[.12em] text-slate-400 hover:text-ink transition-colors"
+          title={collapsed ? 'Show legend' : 'Hide legend'}
         >
           {!collapsed && <span>Legend</span>}
-          <span className="text-xs">{collapsed ? '+' : '−'}</span>
+          <span className="text-xs">{collapsed ? '🏷' : '−'}</span>
         </button>
         <AnimatePresence>
           {!collapsed && (
@@ -50,7 +51,7 @@ export default function MapLegend() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="px-3 pb-3 space-y-2"
+              className="px-3 pb-3 space-y-2 max-h-[50vh] overflow-y-auto"
             >
               {items.map((group) => (
                 <div key={group.group}>

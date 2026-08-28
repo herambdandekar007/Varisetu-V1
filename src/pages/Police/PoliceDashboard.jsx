@@ -340,19 +340,6 @@ export default function PoliceDashboard() {
           </div>
           <div className="relative h-[520px] overflow-hidden rounded-2xl">
             <RouteMap mode="crowd" />
-            {activeDemo === 'crowd-simulation' && (
-              <div className="absolute left-4 top-4 z-[401] rounded-2xl border border-amber-200 bg-amber-50/95 px-3 py-2 shadow backdrop-blur">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Demo · Simulated Live Data</p>
-              </div>
-            )}
-            <div className="absolute right-4 top-4 z-[401] grid gap-2">
-              <div className="rounded-2xl bg-white/95 px-4 py-2 shadow backdrop-blur">
-                <p className="text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">Simulation Step</p>
-                <p className="mt-0.5 text-lg font-bold text-ink">
-                  {simulation.riskScore} <span className="text-xs text-slate-400">/ 100 risk</span>
-                </p>
-              </div>
-            </div>
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

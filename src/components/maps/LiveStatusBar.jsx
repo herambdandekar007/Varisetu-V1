@@ -19,7 +19,7 @@ export default function LiveStatusBar() {
       : 'bg-emerald-500';
 
   return (
-    <div className="flex items-center gap-3 sm:gap-6 overflow-x-auto px-3 py-2 text-[11px] font-semibold text-slate-600 bg-white/90 border-b border-slate-100">
+    <div className="relative z-[450] flex items-center gap-3 sm:gap-6 overflow-x-auto px-3 py-2 text-[11px] font-semibold text-slate-600 bg-white/90 border-b border-slate-100">
       <div className="flex items-center gap-1.5 shrink-0">
         <span>🛕</span>
         <span className="text-ink">Current:</span>

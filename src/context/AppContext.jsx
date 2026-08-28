@@ -119,6 +119,10 @@ export function AppProvider({ children }) {
   const [liveRoute, setLiveRoute] = useState(null);
   const liveRouteThrottleRef = useRef(0);
 
+  const [pilgrimCount, setPilgrimCount] = useState(184260);
+  const pilgrimCountManualRef = useRef(false);
+  const pilgrimCountTimerRef = useRef(null);
+
   const [crowdSummary, setCrowdSummary] = useState(() => crowdService.getSummary());
   const [crowdKPIs, setCrowdKPIs] = useState(() => crowdService.getKPIs());
   const [activeDemo, setActiveDemo] = useState(null);
@@ -213,6 +217,24 @@ export function AppProvider({ children }) {
       }
     });
   }, [pilgrimLocation?.latitude, pilgrimLocation?.longitude]);
+
+  // Auto-increment pilgrim count (+5 to +40 every 30-60s) unless manually overridden
+  useEffect(() => {
+    function tick() {
+      if (pilgrimCountManualRef.current) return;
+      const increment = Math.floor(Math.random() * 36) + 5;
+      setPilgrimCount((prev) => prev + increment);
+    }
+    pilgrimCountTimerRef.current = window.setInterval(tick, 30000 + Math.random() * 30000);
+    return () => {
+      if (pilgrimCountTimerRef.current) clearInterval(pilgrimCountTimerRef.current);
+    };
+  }, []);
+
+  // Keep wariStatus.totalPilgrims in sync with dynamic count
+  useEffect(() => {
+    setWariStatus((prev) => ({ ...prev, totalPilgrims: pilgrimCount.toLocaleString('en-IN') }));
+  }, [pilgrimCount]);
 
   // Recalculate AI pressure and route recommendation periodically (every 60s) and on data changes
   useEffect(() => {
@@ -462,6 +484,8 @@ export function AppProvider({ children }) {
     setNotifications(cloneItems(initialNotifications));
     setGroupMembers(initialGroupMembers);
     setGroupSeparationActive(false);
+    pilgrimCountManualRef.current = false;
+    setPilgrimCount(184260);
   }, [stopCrowdSurge]);
 
   const simulateGroupSeparation = useCallback((memberId) => {
@@ -893,6 +917,25 @@ export function AppProvider({ children }) {
     // Live OSRM route
     liveRoute,
     setLiveRoute,
+
+    // Dynamic pilgrim count
+    pilgrimCount,
+    setPilgrimCount: (count) => {
+      pilgrimCountManualRef.current = true;
+      if (pilgrimCountTimerRef.current) clearInterval(pilgrimCountTimerRef.current);
+      setPilgrimCount(count);
+    },
+    resumePilgrimAutoIncrement: () => {
+      pilgrimCountManualRef.current = false;
+      // Restart the auto-increment interval
+      if (pilgrimCountTimerRef.current) clearInterval(pilgrimCountTimerRef.current);
+      function tick() {
+        if (pilgrimCountManualRef.current) return;
+        const increment = Math.floor(Math.random() * 36) + 5;
+        setPilgrimCount((prev) => prev + increment);
+      }
+      pilgrimCountTimerRef.current = window.setInterval(tick, 30000 + Math.random() * 30000);
+    },
   }), [
     isAccessibilityMode,
     isNotificationOpen,
@@ -948,6 +991,7 @@ export function AppProvider({ children }) {
     recallGroupMember,
     haversineDistance,
     liveRoute,
+    pilgrimCount,
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

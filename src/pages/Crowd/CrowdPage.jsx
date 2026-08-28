@@ -90,11 +90,6 @@ export default function CrowdPage() {
           </div>
           <div className="relative h-[500px] overflow-hidden rounded-2xl">
             <RouteMap mode="crowd" />
-            {activeDemo === 'crowd-simulation' && (
-              <div className="absolute left-4 top-4 z-[401] rounded-2xl bg-amber-50 border border-amber-200 px-3 py-2 shadow backdrop-blur">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Demo · Simulated Live Data</p>
-              </div>
-            )}
           </div>
         </article>
 
