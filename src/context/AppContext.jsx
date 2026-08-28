@@ -121,6 +121,7 @@ export function AppProvider({ children }) {
   const [activeDemo, setActiveDemo] = useState(null);
   const [simulation, setSimulation] = useState({ ...initialSimulation });
   const [groupMembers, setGroupMembers] = useState(initialGroupMembers);
+  const [familyMembers, setFamilyMembers] = useState([]);
   const [groupSeparationActive, setGroupSeparationActive] = useState(false);
 
   const simulationTimerRef = useRef(null);

@@ -24,6 +24,8 @@ import DoctorsPage from './pages/Medical/DoctorsPage';
 import AmbulancesPage from './pages/Medical/AmbulancesPage';
 import CampsPage from './pages/Medical/CampsPage';
 import MedicinePage from './pages/Medical/MedicinePage';
+import ManageMedicinePage from './pages/Medical/ManageMedicinePage';
+import ManageDoctorsPage from './pages/Medical/ManageDoctorsPage';
 import PoliceDashboard from './pages/Police/PoliceDashboard';
 import RiskZonesPage from './pages/Police/RiskZonesPage';
 import BarricadesPage from './pages/Police/BarricadesPage';
@@ -116,9 +118,11 @@ export default function App() {
             <Route path="/medical/dashboard" element={<MedicalDashboard />} />
             <Route path="/medical/cases" element={<CasesPage />} />
             <Route path="/medical/doctors" element={<DoctorsPage />} />
+            <Route path="/medical/manage-doctors" element={<ManageDoctorsPage />} />
             <Route path="/medical/ambulances" element={<AmbulancesPage />} />
             <Route path="/medical/camps" element={<CampsPage />} />
             <Route path="/medical/medicine" element={<MedicinePage />} />
+            <Route path="/medical/manage-medicine" element={<ManageMedicinePage />} />
           </Route>
 
           {/* Police only */}

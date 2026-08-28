@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   HomeIcon, HeartIcon, UserGroupIcon, TruckIcon,
-  BuildingOffice2Icon, BeakerIcon,
+  BuildingOffice2Icon, BeakerIcon, PlusCircleIcon, UserPlusIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
@@ -12,9 +12,11 @@ const navItems = [
   { label: 'Dashboard', to: '/medical/dashboard', icon: HomeIcon },
   { label: 'Active Cases', to: '/medical/cases', icon: HeartIcon },
   { label: 'Available Doctors', to: '/medical/doctors', icon: UserGroupIcon },
+  { label: 'Manage Doctors', to: '/medical/manage-doctors', icon: UserPlusIcon },
   { label: 'Ambulances', to: '/medical/ambulances', icon: TruckIcon },
   { label: 'Medical Camps', to: '/medical/camps', icon: BuildingOffice2Icon },
   { label: 'Medicine Stock', to: '/medical/medicine', icon: BeakerIcon },
+  { label: 'Manage Medicines', to: '/medical/manage-medicine', icon: PlusCircleIcon },
 ];
 
 export default function MedicalSidebar() {
