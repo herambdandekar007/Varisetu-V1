@@ -22,6 +22,7 @@ import { weatherService } from '../services/weatherService';
 import { aiService } from '../services/aiService';
 import { cellCountService } from '../services/cellCountService';
 import { healthService } from '../services/healthService';
+import { routeAdvisorService } from '../services/routeAdvisorService';
 
 const AppContext = createContext(null);
 
@@ -115,6 +116,8 @@ export function AppProvider({ children }) {
   const aiPressureTimerRef = useRef(null);
 
   const [healthSnapshots, setHealthSnapshots] = useState([]);
+  const [liveRoute, setLiveRoute] = useState(null);
+  const liveRouteThrottleRef = useRef(0);
 
   const [crowdSummary, setCrowdSummary] = useState(() => crowdService.getSummary());
   const [crowdKPIs, setCrowdKPIs] = useState(() => crowdService.getKPIs());
@@ -190,6 +193,26 @@ export function AppProvider({ children }) {
       weatherService.fetch(pilgrimLocation.latitude, pilgrimLocation.longitude);
     }
   }, [pilgrimLocation?.latitude, pilgrimLocation?.longitude, pilgrimLocation?.source]);
+
+  // Recompute live OSRM route when pilgrim position changes >50m or every 30s
+  const liveRouteDestRef = useRef([18.515, 74.118]); // Saswad Camp as default destination
+  useEffect(() => {
+    if (!pilgrimLocation?.latitude || !pilgrimLocation?.longitude) return;
+    const now = Date.now();
+    if (now - liveRouteThrottleRef.current < 30000) return;
+
+    const origin = [pilgrimLocation.latitude, pilgrimLocation.longitude];
+    const dest = liveRouteDestRef.current;
+    const dist = Math.sqrt((origin[0] - dest[0]) ** 2 + (origin[1] - dest[1]) ** 2);
+    if (dist < 0.0005 && liveRoute) return;
+
+    liveRouteThrottleRef.current = now;
+    routeAdvisorService.quickRoute(origin, dest).then((result) => {
+      if (result && !result.error) {
+        setLiveRoute(result);
+      }
+    });
+  }, [pilgrimLocation?.latitude, pilgrimLocation?.longitude]);
 
   // Recalculate AI pressure and route recommendation periodically (every 60s) and on data changes
   useEffect(() => {
@@ -866,6 +889,10 @@ export function AppProvider({ children }) {
     simulateGroupSeparation,
     recallGroupMember,
     haversineDistance,
+
+    // Live OSRM route
+    liveRoute,
+    setLiveRoute,
   }), [
     isAccessibilityMode,
     isNotificationOpen,
@@ -920,6 +947,7 @@ export function AppProvider({ children }) {
     simulateGroupSeparation,
     recallGroupMember,
     haversineDistance,
+    liveRoute,
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

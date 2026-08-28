@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useApp } from '../../context/AppContext';
 import { getHomeRoute } from '../../routes/roleRoutes';
 import { useNavigate } from 'react-router-dom';
+import { routeAdvisorService } from '../../services/routeAdvisorService';
 
 const roles = [
   { id: 'pilgrim', label: 'Pilgrim', emoji: '🚶', color: 'bg-saffron-50 text-saffron' },
@@ -33,9 +34,38 @@ export default function DeveloperMode() {
     simulateGroupSeparation,
     recallGroupMember,
     groupSeparationActive,
+    locationService,
+    pilgrimLocation,
   } = useApp();
   const navigate = useNavigate();
   const activeRole = role || 'pilgrim';
+
+  const [locQuery, setLocQuery] = useState('');
+  const [locResults, setLocResults] = useState([]);
+  const [locSearching, setLocSearching] = useState(false);
+  const [showLocDropdown, setShowLocDropdown] = useState(false);
+
+  const handleLocSearch = useCallback(async (q) => {
+    setLocQuery(q);
+    if (q.length < 3) { setLocResults([]); return; }
+    setLocSearching(true);
+    const results = await routeAdvisorService.geocode(q);
+    setLocResults(results);
+    setLocSearching(false);
+    setShowLocDropdown(true);
+  }, []);
+
+  const handleLocSelect = useCallback(async (result) => {
+    setLocQuery(result.name.split(',')[0]);
+    setShowLocDropdown(false);
+    setLocResults([]);
+    await locationService.setPilgrimLocation(result.lat, result.lng, 10);
+  }, [locationService]);
+
+  const handleClearSimLocation = useCallback(() => {
+    locationService.clearSimulatedLocation();
+    setLocQuery('');
+  }, [locationService]);
 
   if (import.meta.env.PROD) return null;
 
@@ -305,6 +335,51 @@ const healthOptions = [
                       )}
                     </div>
                   ))}
+                </div>
+
+                <div className="space-y-3 border-t border-dashed border-slate-100 pt-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Location simulator</p>
+                    {pilgrimLocation?.source === 'simulated' && (
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                        SIMULATED
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-ink focus:border-forest focus:ring-2 focus:ring-emerald-100 outline-none"
+                      placeholder="Search location (e.g. Pune Station)"
+                      value={locQuery}
+                      onChange={(e) => handleLocSearch(e.target.value)}
+                      onFocus={() => locResults.length > 0 && setShowLocDropdown(true)}
+                    />
+                    {locSearching && (
+                      <span className="absolute right-3 top-2 text-[10px] text-slate-400">Searching...</span>
+                    )}
+                    {showLocDropdown && locResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                        {locResults.slice(0, 5).map((r, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleLocSelect(r)}
+                            className="flex w-full items-start gap-2 px-3 py-2 text-left text-[11px] hover:bg-slate-50"
+                          >
+                            <span className="truncate text-ink">{r.name.split(',').slice(0, 2).join(',')}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {pilgrimLocation?.source === 'simulated' && (
+                    <button
+                      onClick={handleClearSimLocation}
+                      className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 transition hover:bg-amber-100"
+                    >
+                      Use real GPS location
+                    </button>
+                  )}
                 </div>
               </div>
 

@@ -91,10 +91,12 @@ export const routeAdvisorService = {
       const data = await res.json();
       if (!data.routes?.[0]) return { error: 'No route found', steps: [] };
       const route = data.routes[0];
+      // OSRM GeoJSON uses [lng, lat] — convert to [lat, lng] for Leaflet
+      const geometry = route.geometry?.coordinates?.map(([lng, lat]) => [lat, lng]) || [];
       return {
         distanceKm: Math.round((route.distance / 1000) * 10) / 10,
         durationMin: Math.round(route.duration / 60),
-        geometry: route.geometry,
+        geometry,
         steps: route.legs?.[0]?.steps?.map((s) => ({
           instruction: s.maneuver?.type === 'arrive' ? 'Arrive at destination'
             : s.maneuver?.type === 'depart' ? `Head ${s.maneuver.modifier || ''}`

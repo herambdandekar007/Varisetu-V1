@@ -229,6 +229,14 @@ export const locationService = {
     return pilgrimState;
   },
 
+  // Clear simulated location and resume GPS tracking
+  clearSimulatedLocation: () => {
+    if (pilgrimState.source !== 'simulated') return;
+    pilgrimState = { ...pilgrimState, source: 'unknown' };
+    notifyPilgrim();
+    locationService.startWatching();
+  },
+
   // Bind the current authenticated user so GPS fixes persist as pings
   bindUser: (userId) => {
     currentUserId = userId || null;
