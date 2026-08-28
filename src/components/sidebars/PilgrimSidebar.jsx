@@ -5,7 +5,7 @@ import {
   ChartBarIcon, HomeIcon, MapIcon, ShieldExclamationIcon,
   UserGroupIcon, UserIcon, WrenchScrewdriverIcon, HeartIcon,
   MagnifyingGlassIcon, BuildingOffice2Icon, HomeModernIcon,
-  BellIcon,
+  BellIcon, TruckIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import { useApp } from '../../context/AppContext';
@@ -28,6 +28,10 @@ const servicesItems = [
 const safetyItems = [
   { name: 'Alerts', to: '/alerts', icon: BellIcon },
   { name: 'Emergency Center', to: '/emergency', icon: ShieldExclamationIcon },
+];
+
+const ambulanceItems = [
+  { name: 'Ambulance Status', to: '/ambulance/status', icon: TruckIcon },
 ];
 
 export default function PilgrimSidebar() {
@@ -81,6 +85,7 @@ export default function PilgrimSidebar() {
         </div>
 
         {renderGroup('Journey', journeyItems, 'pilgrim-journey')}
+        {renderGroup('Ambulance', ambulanceItems, 'pilgrim-ambulance')}
         {renderGroup('Services & Camps', servicesItems, 'pilgrim-services')}
         {renderGroup('Safety Center', safetyItems, 'pilgrim-safety')}
       </nav>

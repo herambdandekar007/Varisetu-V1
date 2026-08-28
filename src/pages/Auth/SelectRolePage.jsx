@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, User, Radio, ShieldCheck } from 'lucide-react';
+import { ArrowRight, User, Radio, ShieldCheck, Truck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getHomeRoute } from '../../routes/roleRoutes';
 import AuthLayout from './AuthLayout';
@@ -21,6 +21,11 @@ const roles = [
     id: 'volunteer', label: 'Volunteer',
     desc: 'Accept field tasks, respond to incidents, and report action on the route.',
     icon: ShieldCheck, color: 'bg-emerald-50 text-forest',
+  },
+  {
+    id: 'ambulance_driver', label: 'Ambulance Driver',
+    desc: 'Drive emergency ambulances, set your status, and route to hospitals during the Wari.',
+    icon: Truck, color: 'bg-red-50 text-red-600',
   },
 ];
 

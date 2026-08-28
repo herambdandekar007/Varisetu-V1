@@ -85,6 +85,25 @@ export function createRouteEndpointIcon(isStart) {
   });
 }
 
+// Ambulance marker — colored by the ambulance's registered color, with a pulsing
+// dot when it's in EMERGENCY mode.
+export function createAmbulanceIcon(color = '#D32F2F', emergency = false) {
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color || '') ? color : '#D32F2F';
+  return L.divIcon({
+    className: 'wari-ambulance-marker',
+    html: `
+      <div class="wari-ambulance-wrap ${emergency ? 'wari-ambulance-pulse' : ''}" style="--ambulance-color:${hex}">
+        <div class="wari-ambulance-inner">
+          <span style="font-size:20px">🚑</span>
+        </div>
+        ${emergency ? '<span class="wari-ambulance-halo"></span>' : ''}
+      </div>`,
+    iconSize: [40, 44],
+    iconAnchor: [20, 44],
+    popupAnchor: [0, -46],
+  });
+}
+
 export function createCrowdIcon(level) {
   const config = {
     low: { bg: '#008C45', label: 'Low' },

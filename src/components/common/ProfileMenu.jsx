@@ -10,6 +10,7 @@ const roleColors = {
   medical: 'bg-red-50 text-red-600',
   police: 'bg-blue-50 text-blue-700',
   municipality: 'bg-purple-50 text-purple-700',
+  ambulance_driver: 'bg-red-50 text-red-600',
 };
 
 export default function ProfileMenu() {
@@ -29,7 +30,7 @@ export default function ProfileMenu() {
   const displayName = user?.name || profile?.fullName || 'User';
   const initial = displayName[0]?.toUpperCase() || '?';
   const roleId = role || 'pilgrim';
-  const roleLabel = { pilgrim: 'Pilgrim', volunteer: 'Volunteer', medical: 'Medical', police: 'Controller', municipality: 'Municipality' }[roleId] || 'Pilgrim';
+  const roleLabel = { pilgrim: 'Pilgrim', volunteer: 'Volunteer', medical: 'Medical', police: 'Controller', municipality: 'Municipality', ambulance_driver: 'Ambulance Driver' }[roleId] || 'Pilgrim';
 
   const handleLogout = () => {
     setOpen(false);

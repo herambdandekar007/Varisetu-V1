@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Truck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getHomeRoute } from '../../routes/roleRoutes';
 import AuthLayout from './AuthLayout';
@@ -107,6 +107,27 @@ export default function LoginPage() {
           <Link to="/register" className="font-bold text-saffron hover:text-saffron/80">Register</Link>
         </p>
       </form>
+
+      {/* Ambulance driver quick access */}
+      <div className="mt-6 rounded-2xl border border-red-100 bg-red-50/60 p-4">
+        <div className="flex items-center gap-2">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-100 text-red-600">
+            <Truck className="h-4 w-4" />
+          </div>
+          <p className="text-sm font-bold text-red-700">Ambulance Driver</p>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-red-600">
+          Sign in with your ambulance account to open your driver console, set your mode
+          (Available / On Duty / Emergency / Offline), track your route, and route to a hospital.
+          Your ambulance ID is shown in the console — driver details stay private.
+        </p>
+        <Link
+          to="/register"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+        >
+          Register an ambulance <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
     </AuthLayout>
   );
 }

@@ -12,6 +12,7 @@ const roles = [
   { id: 'medical', label: 'Medical', emoji: '🏥', color: 'bg-red-50 text-red-600' },
   { id: 'police', label: 'Controller', emoji: '🎛️', color: 'bg-blue-50 text-blue-700' },
   { id: 'municipality', label: 'Municipality', emoji: '🏛️', color: 'bg-purple-50 text-purple-700' },
+  { id: 'ambulance_driver', label: 'Ambulance Driver', emoji: '🚑', color: 'bg-red-50 text-red-600' },
 ];
 
 export default function DeveloperMode() {

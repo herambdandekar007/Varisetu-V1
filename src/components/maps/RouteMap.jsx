@@ -13,6 +13,7 @@ import LiveStatusBar from './LiveStatusBar';
 import WariTimeline from './WariTimeline';
 import EmergencyActions from './EmergencyActions';
 import ResourceSummary from './ResourceSummary';
+import AmbulanceLayer from './AmbulanceLayer';
 import { createPilgrimIcon, createFamilyMemberIcon } from './markerIcons';
 import { useApp } from '../../context/AppContext';
 
@@ -154,6 +155,7 @@ export default function RouteMap({ mode = 'route', className = '' }) {
             />
           )}
           {activeLayers.family && <FamilyMarkers members={groupMembers} />}
+          <AmbulanceLayer />
           <MapControls onToggleLayers={() => setLayersOpen((o) => !o)} />
         </MapContainer>
 

@@ -39,6 +39,9 @@ const navByRole = {
     { nameKey: 'nav.weather', to: '/municipality/weather', icon: WrenchScrewdriverIcon },
     { nameKey: 'nav.crowd', to: '/crowd', icon: UserGroupIcon },
   ],
+  ambulance_driver: [
+    { nameKey: 'Console', to: '/ambulance/console', icon: PhoneIcon },
+  ],
 };
 
 export default function MobileNavigation() {

@@ -12,6 +12,7 @@ const roleBadgeLabels = {
   medical: 'Medical',
   police: 'Controller',
   municipality: 'Municipality',
+  ambulance_driver: 'Ambulance Driver',
 };
 
 const roleBadgeColors = {
@@ -20,6 +21,7 @@ const roleBadgeColors = {
   medical: 'bg-red-50 text-red-600',
   police: 'bg-blue-50 text-blue-700',
   municipality: 'bg-purple-50 text-purple-700',
+  ambulance_driver: 'bg-red-50 text-red-600',
 };
 
 export default function TopBar() {

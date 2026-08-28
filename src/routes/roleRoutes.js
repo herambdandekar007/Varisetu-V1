@@ -4,6 +4,7 @@ const roleRoutes = {
   medical: '/medical/dashboard',
   police: '/controller/dashboard',
   municipality: '/municipality/dashboard',
+  ambulance_driver: '/ambulance/console',
 };
 
 export const getHomeRoute = (roleId) => roleRoutes[roleId] || '/dashboard';

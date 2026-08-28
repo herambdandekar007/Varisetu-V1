@@ -7,8 +7,11 @@ import VolunteerSidebar from '../components/sidebars/VolunteerSidebar';
 import MedicalSidebar from '../components/sidebars/MedicalSidebar';
 import PoliceSidebar from '../components/sidebars/PoliceSidebar';
 import MunicipalitySidebar from '../components/sidebars/MunicipalitySidebar';
+import AmbulanceSidebar from '../components/sidebars/AmbulanceSidebar';
 import TopBar from '../components/navbar/TopBar';
 import NotificationDrawer from '../components/notifications/NotificationDrawer';
+import EmergencyAlertBanner from '../components/notifications/EmergencyAlertBanner';
+import EmergencyAlertOnboarding from '../components/notifications/EmergencyAlertOnboarding';
 import MobileNavigation from '../components/sidebars/MobileNavigation';
 import DeveloperMode from '../components/dev/DeveloperMode';
 import { SkeletonPage } from '../components/common/Skeleton';
@@ -19,6 +22,7 @@ const sidebarMap = {
   medical: MedicalSidebar,
   police: PoliceSidebar,
   municipality: MunicipalitySidebar,
+  ambulance_driver: AmbulanceSidebar,
 };
 
 export default function RoleLayout() {
@@ -27,6 +31,7 @@ export default function RoleLayout() {
   const { isAccessibilityMode } = useApp();
   const roleId = role || 'pilgrim';
   const SidebarComponent = sidebarMap[roleId] || PilgrimSidebar;
+  const isAlertRecipient = roleId === 'pilgrim' || roleId === 'volunteer';
 
   return (
     <div className={isAccessibilityMode ? 'accessibility-mode min-h-screen bg-cloud' : 'min-h-screen bg-cloud'}>
@@ -41,6 +46,8 @@ export default function RoleLayout() {
       </div>
       <MobileNavigation />
       <NotificationDrawer />
+      <EmergencyAlertBanner />
+      {isAlertRecipient && <EmergencyAlertOnboarding />}
       <DeveloperMode />
     </div>
   );

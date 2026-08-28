@@ -13,6 +13,7 @@ import UnauthorizedPage from './pages/Unauthorized/UnauthorizedPage';
 import AuthCallbackPage from './pages/Auth/AuthCallbackPage';
 import ProfilePage from './pages/Profile/ProfilePage';
 import SettingsPage from './pages/Settings/SettingsPage';
+import AmbulanceRegister from './pages/Ambulance/AmbulanceRegister';
 import VolunteerDashboard from './pages/Volunteer/VolunteerDashboard';
 import ZonePage from './pages/Volunteer/ZonePage';
 import RequestsPage from './pages/Volunteer/RequestsPage';
@@ -53,6 +54,8 @@ const GroupPage = lazy(() => import('./pages/Pilgrim/GroupPage'));
 const StayPage = lazy(() => import('./pages/Stay/StayPage'));
 const HealthPage = lazy(() => import('./pages/Pilgrim/HealthPage'));
 const AlertsPage = lazy(() => import('./pages/Alerts/AlertsPage'));
+const AmbulanceConsole = lazy(() => import('./pages/Ambulance/AmbulanceConsole'));
+const AmbulanceStatus = lazy(() => import('./pages/Ambulance/AmbulanceStatus'));
 
 function LazyPage({ Component }) {
   return (
@@ -69,6 +72,7 @@ export default function App() {
       <Route path="/" element={<LazyPage Component={LandingPage} />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/ambulance/register" element={<AmbulanceRegister />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/setup-profile" element={<SetupProfilePage />} />
       <Route path="/select-role" element={<SelectRolePage />} />
@@ -102,6 +106,16 @@ export default function App() {
             <Route path="/navigation" element={<LazyPage Component={NavigationPage} />} />
             <Route path="/resources" element={<LazyPage Component={ResourcesPage} />} />
             <Route path="/analytics" element={<LazyPage Component={AnalyticsPage} />} />
+          </Route>
+
+          {/* Shared: Pilgrim + Volunteer — read-only ambulance status */}
+          <Route element={<RoleProtectedRoute allowedRoles={['pilgrim', 'volunteer']} />}>
+            <Route path="/ambulance/status" element={<LazyPage Component={AmbulanceStatus} />} />
+          </Route>
+
+          {/* Ambulance driver only */}
+          <Route element={<RoleProtectedRoute allowedRoles={['ambulance_driver']} />}>
+            <Route path="/ambulance/console" element={<LazyPage Component={AmbulanceConsole} />} />
           </Route>
 
           {/* Volunteer only */}

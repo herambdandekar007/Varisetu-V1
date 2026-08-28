@@ -9,6 +9,7 @@ const DB_ROLE_TO_UI_ROLE = {
   VOLUNTEER: 'volunteer',
   medical: 'medical',
   municipality: 'municipality',
+  ambulance_driver: 'ambulance_driver',
   warkari: 'pilgrim',
 };
 
@@ -18,6 +19,7 @@ const UI_ROLE_TO_DB_ROLE = {
   volunteer: 'VOLUNTEER',
   medical: 'medical',
   municipality: 'municipality',
+  ambulance_driver: 'ambulance_driver',
 };
 
 const AuthContext = createContext({
