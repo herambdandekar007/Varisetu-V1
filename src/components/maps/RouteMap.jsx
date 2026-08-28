@@ -196,14 +196,13 @@ export default function RouteMap({ mode = 'route', className = '' }) {
         )}
 
         {(liveRoute || routeData) && (
-          <div className="absolute top-4 right-4 bg-emerald-50 rounded-xl shadow-lg p-4 z-50">
-            <h4 className="text-lg font-bold">{liveRoute ? 'Live OSRM Route' : 'Live Route'}</h4>
-            <p className="mt-1">
-              <span className="text-emerald-700">{liveRoute?.distanceKm || routeData.distanceKm} km</span>{' '}
-              • <span className="text-emerald-700">{liveRoute?.durationMin || routeData.durationMin} min</span>
+          <div className="absolute top-4 right-14 bg-emerald-50 rounded-xl shadow-lg p-3 z-[450] max-w-[200px]">
+            <h4 className="text-xs font-bold text-ink truncate">{liveRoute ? 'Live OSRM Route' : 'Live Route'}</h4>
+            <p className="mt-1 text-sm font-bold text-emerald-700 truncate">
+              {liveRoute?.distanceKm || routeData.distanceKm} km · {liveRoute?.durationMin || routeData.durationMin} min
             </p>
             {liveRoute?.steps?.length > 0 && (
-              <p className="mt-1 text-[10px] text-slate-500">{liveRoute.steps.length} turns</p>
+              <p className="mt-0.5 text-[10px] text-slate-500 truncate">{liveRoute.steps.length} turns</p>
             )}
           </div>
         )}

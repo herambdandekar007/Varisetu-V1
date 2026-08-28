@@ -21,7 +21,7 @@ const DEFAULT_STOPS = [
 
 export default function NavigationPage() {
   const { t } = useTranslation();
-  const { activeDemo, simulation, routes, routeRecommendation, aiRouteRec, weather, aiPressure, locationPermission } = useApp();
+  const { activeDemo, simulation, routes, routeRecommendation, aiRouteRec, weather, aiPressure, locationPermission, pilgrimLocation, liveRoute } = useApp();
   const [selectedRoute, setSelectedRoute] = useState('recommended');
   const [originQuery, setOriginQuery] = useState('');
   const [destQuery, setDestQuery] = useState('');
@@ -177,21 +177,13 @@ export default function NavigationPage() {
             <div>
               <p className="text-base font-bold text-ink">Alandi Start <ArrowRightIcon className="mx-1 inline h-4 w-4 text-slate-400" /> Saswad Camp</p>
               <p className="mt-1 text-xs text-slate-500">
-                {isSimRunning ? 'Demo: Simulated · Live Loni Kalbhor · KM 11.2' : 'Live: Loni Kalbhor · KM 11.2'}
+                {isSimRunning ? 'Demo: Simulated' : 'Live'}: {pilgrimLocation?.zoneName || 'Starting point'} · {liveRoute ? `${liveRoute.distanceKm} km remaining` : 'Loading route...'}
               </p>
             </div>
             <Badge tone={locationPermission === 'granted' ? 'green' : locationPermission === 'denied' ? 'red' : 'orange'} dot>{locationPermission === 'granted' ? 'GPS connected' : locationPermission === 'denied' ? 'GPS unavailable' : 'Connecting GPS...'}</Badge>
           </div>
           <div className="relative h-[480px]">
             <RouteMap />
-            <div className="absolute left-4 top-4 z-[401] rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur">
-              <p className="label">{t('navigation.activeGuidance')}</p>
-              <p className="mt-1 text-sm font-bold text-ink">Continue for 180 m</p>
-              <p className="mt-1 text-xs text-slate-500">towards water point W-14</p>
-              {isSimRunning && (
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">Demo Simulated</p>
-              )}
-            </div>
           </div>
         </article>
 
@@ -200,15 +192,15 @@ export default function NavigationPage() {
           <h2 className="text-xl font-bold text-ink">{summaryHeaderTitle}</h2>
           <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-emerald-50 p-4 text-center">
             <div>
-              <p className="text-lg font-bold text-forest">{rec?.recommended?.distance || '8.4 km'}</p>
+              <p className="text-lg font-bold text-forest truncate">{liveRoute?.distanceKm ? `${liveRoute.distanceKm} km` : rec?.recommended?.distance || '—'}</p>
               <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700/70">{t('navigation.distance')}</p>
             </div>
             <div>
-              <p className="text-lg font-bold text-forest">{rec?.recommended?.eta || '2h 18m'}</p>
+              <p className="text-lg font-bold text-forest truncate">{liveRoute?.durationMin ? `${liveRoute.durationMin} min` : rec?.recommended?.eta || '—'}</p>
               <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700/70">{t('navigation.eta')}</p>
             </div>
             <div>
-              <p className={cn('text-lg font-bold', summaryRiskColorClass)}>{summaryRisk}</p>
+              <p className={cn('text-lg font-bold truncate', summaryRiskColorClass)}>{summaryRisk}</p>
               <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700/70">{t('navigation.crowdRisk')}</p>
             </div>
           </div>
