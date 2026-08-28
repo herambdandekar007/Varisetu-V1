@@ -171,23 +171,35 @@ export const campService = {
     for (const [k, v] of Object.entries(item || {})) {
       payload[remap[k] || k] = v;
     }
+    // Ensure noted_at is set
+    if (!payload.noted_at) {
+      payload.noted_at = new Date().toISOString();
+    }
     const { data, error } = await supabase.from('camp_inventory').insert(payload).select('*').single();
-    if (error) { console.error('[campService] create inventory error:', error); return null; }
+    if (error) {
+      console.error('[campService] create inventory error:', error);
+      console.error('[campService] payload was:', payload);
+      return null;
+    }
     inventoryCache = [data, ...inventoryCache];
     notifyInventory();
     return data;
   },
   updateInventoryItem: async (id, patch) => {
     const remap = {
-      zoneId: 'zone_id', zoneName: 'zone_name', itemName: 'item_name',
-      notedAt: 'noted_at', updatedBy: 'updated_by', isDemo: 'is_demo',
+      resourceId: 'resource_id', zoneId: 'zone_id', zoneName: 'zone_name',
+      itemName: 'item_name', notedAt: 'noted_at', updatedBy: 'updated_by', isDemo: 'is_demo',
     };
     const dbPatch = {};
     for (const [k, v] of Object.entries(patch || {})) {
       dbPatch[remap[k] || k] = v;
     }
     const { data, error } = await supabase.from('camp_inventory').update(dbPatch).eq('id', id).select('*').single();
-    if (error) { console.error('[campService] update inventory error:', error); return null; }
+    if (error) {
+      console.error('[campService] update inventory error:', error);
+      console.error('[campService] patch was:', dbPatch);
+      return null;
+    }
     inventoryCache = inventoryCache.map((t) => (t.id === id ? data : t));
     notifyInventory();
     return data;
