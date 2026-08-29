@@ -329,7 +329,20 @@
     "liveLayers": "थेट स्तर",
     "safeRoute": "सुरक्षित मार्ग",
     "alert": "सूचना",
-    "water": "पाणी"
+    "water": "पाणी",
+    "separated": "वेगळे आहेत", "withYou": "तुमच्यासोबत आहेत", "demoSimulatedLocation": "डेमो · अनुकरण केलेले स्थान",
+    "locationAccessNeeded": "स्थानाची परवानगी आवश्यक आहे",
+    "enableGps": "थेट नेव्हिगेशनसाठी ब्राउझरच्या सेटिंग्जमध्ये GPS सक्षम करा. डेव्हलपर मोडमध्ये तुम्ही अनुकरण केलेल्या स्थानांसह नकाशा वापरू शकता.",
+    "liveOsrmRoute": "थेट OSRM मार्ग", "liveRoute": "थेट मार्ग", "routeDistanceDuration": "{{distance}} किमी · {{duration}} मि.", "routeDistanceDurationApprox": "{{distance}} किमी · सुमारे {{duration}} मि.", "turns": "{{count}} वळणे",
+    "current": "सध्याचे", "next": "पुढील", "eta": "अंदाजित वेळ", "pilgrims": "यात्रेकरू", "crowdStatus": "गर्दी: {{status}}", "aiStatus": "AI: {{status}}", "demoSimulatedLive": "डेमो · अनुकरण केलेला थेट डेटा",
+    "zoomIn": "झूम वाढवा", "zoomOut": "झूम कमी करा", "myLocation": "माझे स्थान", "toggleLayers": "स्तर बदला", "showLegend": "संकेत दाखवा", "hideLegend": "संकेत लपवा", "legend": "संकेत", "layers": "स्तर",
+    "legendGroups": { "crowd": "गर्दी", "resources": "संसाधने", "safety": "सुरक्षा", "route": "मार्ग" },
+    "legendItems": { "low": "कमी", "moderate": "मध्यम", "high": "उच्च", "severe": "तीव्र", "water": "पाणी", "medical": "वैद्यकीय", "food": "अन्न", "toilet": "शौचालय", "parking": "पार्किंग", "rest": "विश्रांती", "police": "पोलीस", "ambulance": "रुग्णवाहिका", "emergency": "आपत्कालीन", "palkhi": "पालखी", "family": "कुटुंब", "safeRoute": "सुरक्षित मार्ग" },
+    "layerItems": { "crowd": "गर्दी", "resources": "संसाधने", "medical": "वैद्यकीय", "police": "पोलीस", "parking": "पार्किंग", "food": "अन्न", "toilets": "शौचालये", "family": "कुटुंब", "palkhi": "पालखी", "weather": "हवामान" },
+    "emergencyActions": { "medical": "वैद्यकीय मदत", "sos": "SOS", "lost": "हरवलेली व्यक्ती", "contacts": "आपत्कालीन" },
+    "nearby": "जवळचे", "meters": "{{distance}} मीटर", "kilometers": "{{distance}} किमी", "noContactNumber": "संपर्क क्रमांक उपलब्ध नाही",
+    "resourceCategories": { "water": "पाणी", "medical": "वैद्यकीय", "food": "अन्न", "toilet": "शौचालय" },
+    "stockLiters": "साठा (ली.)", "bedsFree": "रिकामे बेड", "waiting": "प्रतीक्षा", "mealsLeft": "उरलेले जेवण", "ambulances": "रुग्णवाहिका", "stockLevel": "साठा पातळी", "walkingRoute": "पायी मार्ग", "call": "कॉल करा", "openInMap": "नकाशात उघडा"
   },
   "language": {
     "mr": "मराठी",

@@ -16,6 +16,7 @@ import ResourceSummary from './ResourceSummary';
 import AmbulanceLayer from './AmbulanceLayer';
 import { createPilgrimIcon, createFamilyMemberIcon } from './markerIcons';
 import { useApp } from '../../context/AppContext';
+import { useTranslation } from 'react-i18next';
 
 const defaultLayers = {
   crowd: true,
@@ -86,6 +87,7 @@ function PilgrimArrow({ position, heading, isSimulated }) {
 const FAMILY_COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#F97316', '#06B6D4'];
 
 function FamilyMarkers({ members }) {
+  const { t } = useTranslation();
   if (!members?.length) return null;
   return members.map((m, i) => (
     <Marker
@@ -97,7 +99,7 @@ function FamilyMarkers({ members }) {
         <div className="text-center">
           <p className="text-sm font-bold text-ink">{m.name}</p>
           <p className="text-[11px] text-slate-500">
-            {m.separated ? 'Separated' : 'With you'}
+            {m.separated ? t('map.separated') : t('map.withYou')}
           </p>
         </div>
       </Popup>
@@ -106,6 +108,7 @@ function FamilyMarkers({ members }) {
 }
 
 export default function RouteMap({ mode = 'route', className = '' }) {
+  const { t } = useTranslation();
   const [layersOpen, setLayersOpen] = useState(false);
   const [activeLayers, setActiveLayers] = useState(defaultLayers);
   const { pilgrimLocation, routeData, locationPermission, liveRoute, groupMembers } = useApp();
@@ -162,27 +165,27 @@ export default function RouteMap({ mode = 'route', className = '' }) {
         {isSimulated && (
           <div className="absolute top-4 left-4 z-[500] flex items-center gap-2 rounded-xl bg-amber-500 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg">
             <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-            Demo · Simulated Location
+            {t('map.demoSimulatedLocation')}
           </div>
         )}
 
         {isDenied && (
           <div className="absolute top-4 left-4 z-[500] max-w-xs rounded-xl bg-white/95 p-3 shadow-lg backdrop-blur border border-slate-200">
-            <p className="text-xs font-bold text-ink">Location access needed</p>
+            <p className="text-xs font-bold text-ink">{t('map.locationAccessNeeded')}</p>
             <p className="mt-1 text-[11px] text-slate-500">
-              Enable GPS in your browser settings for live navigation. You can use the map with simulated locations in Developer Mode.
+              {t('map.enableGps')}
             </p>
           </div>
         )}
 
         {(liveRoute || routeData) && (
           <div className="absolute top-4 right-14 bg-emerald-50 rounded-xl shadow-lg p-3 z-[450] max-w-[200px]">
-            <h4 className="text-xs font-bold text-ink truncate">{liveRoute ? 'Live OSRM Route' : 'Live Route'}</h4>
+            <h4 className="text-xs font-bold text-ink truncate">{liveRoute ? t('map.liveOsrmRoute') : t('map.liveRoute')}</h4>
             <p className="mt-1 text-sm font-bold text-emerald-700 truncate">
-              {liveRoute?.distanceKm || routeData.distanceKm} km · {liveRoute?.durationMin || routeData.durationMin} min
+              {t('map.routeDistanceDuration', { distance: liveRoute?.distanceKm || routeData.distanceKm, duration: liveRoute?.durationMin || routeData.durationMin })}
             </p>
             {liveRoute?.steps?.length > 0 && (
-              <p className="mt-0.5 text-[10px] text-slate-500 truncate">{liveRoute.steps.length} turns</p>
+              <p className="mt-0.5 text-[10px] text-slate-500 truncate">{t('map.turns', { count: liveRoute.steps.length })}</p>
             )}
           </div>
         )}

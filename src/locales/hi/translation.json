@@ -329,7 +329,20 @@
     "liveLayers": "लाइव लेयर",
     "safeRoute": "सुरक्षित मार्ग",
     "alert": "चेतावनी",
-    "water": "पानी"
+    "water": "पानी",
+    "separated": "अलग हैं", "withYou": "आपके साथ हैं", "demoSimulatedLocation": "डेमो · सिम्युलेटेड स्थान",
+    "locationAccessNeeded": "स्थान एक्सेस चाहिए",
+    "enableGps": "लाइव नेविगेशन के लिए अपनी ब्राउज़र सेटिंग में GPS सक्षम करें। आप डेवलपर मोड में सिम्युलेटेड स्थानों के साथ मानचित्र का उपयोग कर सकते हैं।",
+    "liveOsrmRoute": "लाइव OSRM मार्ग", "liveRoute": "लाइव मार्ग", "routeDistanceDuration": "{{distance}} किमी · {{duration}} मिनट", "routeDistanceDurationApprox": "{{distance}} किमी · लगभग {{duration}} मिनट", "turns": "{{count}} मोड़",
+    "current": "वर्तमान", "next": "अगला", "eta": "अनुमानित समय", "pilgrims": "तीर्थयात्री", "crowdStatus": "भीड़: {{status}}", "aiStatus": "AI: {{status}}", "demoSimulatedLive": "डेमो · सिम्युलेटेड लाइव",
+    "zoomIn": "ज़ूम इन", "zoomOut": "ज़ूम आउट", "myLocation": "मेरा स्थान", "toggleLayers": "लेयर बदलें", "showLegend": "लीजेंड दिखाएं", "hideLegend": "लीजेंड छिपाएं", "legend": "लीजेंड", "layers": "लेयर",
+    "legendGroups": { "crowd": "भीड़", "resources": "संसाधन", "safety": "सुरक्षा", "route": "मार्ग" },
+    "legendItems": { "low": "कम", "moderate": "मध्यम", "high": "उच्च", "severe": "गंभीर", "water": "पानी", "medical": "चिकित्सा", "food": "भोजन", "toilet": "शौचालय", "parking": "पार्किंग", "rest": "विश्राम", "police": "पुलिस", "ambulance": "एम्बुलेंस", "emergency": "आपातकाल", "palkhi": "पालखी", "family": "परिवार", "safeRoute": "सुरक्षित मार्ग" },
+    "layerItems": { "crowd": "भीड़", "resources": "संसाधन", "medical": "चिकित्सा", "police": "पुलिस", "parking": "पार्किंग", "food": "भोजन", "toilets": "शौचालय", "family": "परिवार", "palkhi": "पालखी", "weather": "मौसम" },
+    "emergencyActions": { "medical": "चिकित्सा सहायता", "sos": "SOS", "lost": "लापता व्यक्ति", "contacts": "आपातकाल" },
+    "nearby": "आसपास", "meters": "{{distance}} मीटर", "kilometers": "{{distance}} किमी", "noContactNumber": "कोई संपर्क नंबर उपलब्ध नहीं है",
+    "resourceCategories": { "water": "पानी", "medical": "चिकित्सा", "food": "भोजन", "toilet": "शौचालय" },
+    "stockLiters": "स्टॉक (ली.)", "bedsFree": "बिस्तर उपलब्ध", "waiting": "प्रतीक्षा", "mealsLeft": "भोजन शेष", "ambulances": "एम्बुलेंस", "stockLevel": "स्टॉक स्तर", "walkingRoute": "पैदल मार्ग", "call": "कॉल करें", "openInMap": "मानचित्र में खोलें"
   },
   "language": {
     "mr": "मराठी",

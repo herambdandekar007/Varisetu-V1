@@ -30,7 +30,7 @@ export default function WariTimeline() {
           <div key={stop.name} className="flex items-center">
             <div className="flex flex-col items-center min-w-[80px]">
               <span className={cn('text-[10px] font-bold uppercase tracking-wider', statusLabelColor(stop.status))}>
-                {stop.status === 'current' ? '● NOW' : stop.status === 'passed' ? '✓' : stop.time}
+                {stop.status === 'current' ? `● ${t('common.now')}` : stop.status === 'passed' ? '✓' : stop.time}
               </span>
               <div className={cn('mt-1 h-2.5 w-2.5 rounded-full ring-2 ring-white', statusColor(stop.status))} />
               <span className={cn(

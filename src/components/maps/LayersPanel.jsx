@@ -1,19 +1,21 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const layers = [
-  { id: 'crowd', label: 'Crowd', emoji: '👥', defaultOn: true },
-  { id: 'resources', label: 'Resources', emoji: '📦', defaultOn: true },
-  { id: 'medical', label: 'Medical', emoji: '🏥', defaultOn: true },
-  { id: 'police', label: 'Police', emoji: '👮', defaultOn: true },
-  { id: 'parking', label: 'Parking', emoji: '🅿', defaultOn: false },
-  { id: 'food', label: 'Food', emoji: '🍛', defaultOn: true },
-  { id: 'toilets', label: 'Toilets', emoji: '🚻', defaultOn: false },
-  { id: 'family', label: 'Family', emoji: '👨‍👩‍👧', defaultOn: false },
-  { id: 'palkhi', label: 'Palkhi', emoji: '🛕', defaultOn: true },
-  { id: 'weather', label: 'Weather', emoji: '🌤', defaultOn: false },
+  { id: 'crowd', emoji: '👥', defaultOn: true },
+  { id: 'resources', emoji: '📦', defaultOn: true },
+  { id: 'medical', emoji: '🏥', defaultOn: true },
+  { id: 'police', emoji: '👮', defaultOn: true },
+  { id: 'parking', emoji: '🅿', defaultOn: false },
+  { id: 'food', emoji: '🍛', defaultOn: true },
+  { id: 'toilets', emoji: '🚻', defaultOn: false },
+  { id: 'family', emoji: '👨‍👩‍👧', defaultOn: false },
+  { id: 'palkhi', emoji: '🛕', defaultOn: true },
+  { id: 'weather', emoji: '🌤', defaultOn: false },
 ];
 
 export default function LayersPanel({ open, onClose, activeLayers, onToggleLayer }) {
+  const { t } = useTranslation();
   return (
     <AnimatePresence>
       {open && (
@@ -25,7 +27,7 @@ export default function LayersPanel({ open, onClose, activeLayers, onToggleLayer
           className="absolute left-4 top-4 z-[500] w-44 rounded-xl border border-slate-100 bg-white/95 p-3 shadow-lg backdrop-blur"
         >
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">Layers</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.12em] text-slate-400">{t('map.layers')}</p>
             <button onClick={onClose} className="text-xs text-slate-400 hover:text-ink">✕</button>
           </div>
           <div className="space-y-1.5">
@@ -39,7 +41,7 @@ export default function LayersPanel({ open, onClose, activeLayers, onToggleLayer
                     onChange={() => onToggleLayer(layer.id)}
                     className="h-3.5 w-3.5 rounded border-slate-300 text-saffron accent-saffron"
                   />
-                  <span className="text-xs text-slate-600">{layer.emoji} {layer.label}</span>
+                  <span className="text-xs text-slate-600">{layer.emoji} {t(`map.layerItems.${layer.id}`)}</span>
                 </label>
               );
             })}
