@@ -10,25 +10,25 @@ import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
 
 const overviewItems = [
-  { label: 'Command Center', to: '/controller/dashboard', icon: HomeIcon },
-  { label: 'Live Map', to: '/crowd', icon: MapIcon },
+  { labelKey: 'controllerNav.commandCenter', to: '/controller/dashboard', icon: HomeIcon },
+  { labelKey: 'controllerNav.liveMap', to: '/crowd', icon: MapIcon },
 ];
 
 const crowdItems = [
-  { label: 'Crowd Management', to: '/controller/risk-zones', icon: ShieldExclamationIcon },
-  { label: 'AI Forecast', to: '/analytics', icon: BoltIcon },
+  { labelKey: 'controllerNav.crowdManagement', to: '/controller/risk-zones', icon: ShieldExclamationIcon },
+  { labelKey: 'controllerNav.aiForecast', to: '/analytics', icon: BoltIcon },
 ];
 
 const operationsItems = [
-  { label: 'Emergency Calls', to: '/controller/emergency', icon: PhoneIcon },
-  { label: 'Patrols', to: '/controller/patrols', icon: UsersIcon },
-  { label: 'Barricades', to: '/controller/barricades', icon: HeartIcon },
-  { label: 'Lost Persons', to: '/controller/lost-persons', icon: MagnifyingGlassIcon },
+  { labelKey: 'controllerNav.emergencyCalls', to: '/controller/emergency', icon: PhoneIcon },
+  { labelKey: 'controllerNav.patrols', to: '/controller/patrols', icon: UsersIcon },
+  { labelKey: 'controllerNav.barricades', to: '/controller/barricades', icon: HeartIcon },
+  { labelKey: 'controllerNav.lostPersons', to: '/controller/lost-persons', icon: MagnifyingGlassIcon },
 ];
 
 const decisionItems = [
-  { label: 'Route Management', to: '/navigation', icon: ArrowPathIcon },
-  { label: 'Broadcast Alerts', to: '/controller/dashboard', icon: SignalIcon },
+  { labelKey: 'controllerNav.routeManagement', to: '/navigation', icon: ArrowPathIcon },
+  { labelKey: 'controllerNav.broadcastAlerts', to: '/controller/dashboard', icon: SignalIcon },
 ];
 
 export default function PoliceSidebar() {
@@ -43,7 +43,7 @@ export default function PoliceSidebar() {
             <>
               {isActive && <motion.span layoutId={layoutId} className="absolute inset-0 rounded-xl bg-blue-50" transition={{ type: 'spring', stiffness: 380, damping: 30 }} />}
               <item.icon className="relative z-10 h-5 w-5" />
-              <span className="relative z-10">{item.label}</span>
+              <span className="relative z-10">{t(item.labelKey)}</span>
             </>
           )}
         </NavLink>
@@ -58,15 +58,15 @@ export default function PoliceSidebar() {
           <BoltIcon className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-lg font-bold tracking-tight text-ink">VariSetu</p>
-          <p className="-mt-0.5 text-[10px] font-bold uppercase tracking-[.13em] text-blue-600">Controller</p>
+          <p className="text-lg font-bold tracking-tight text-ink">{t('app.name')}</p>
+          <p className="-mt-0.5 text-[10px] font-bold uppercase tracking-[.13em] text-blue-600">{t('topbar.controller')}</p>
         </div>
       </NavLink>
       <nav className="mt-10 space-y-1">
-        {renderGroup('Overview', overviewItems, 'ctrl-nav-overview')}
-        {renderGroup('Crowd', crowdItems, 'ctrl-nav-crowd')}
-        {renderGroup('Operations', operationsItems, 'ctrl-nav-ops')}
-        {renderGroup('Decision', decisionItems, 'ctrl-nav-decision')}
+        {renderGroup(t('controllerNav.overview'), overviewItems, 'ctrl-nav-overview')}
+        {renderGroup(t('controllerNav.crowd'), crowdItems, 'ctrl-nav-crowd')}
+        {renderGroup(t('controllerNav.operations'), operationsItems, 'ctrl-nav-ops')}
+        {renderGroup(t('controllerNav.decision'), decisionItems, 'ctrl-nav-decision')}
       </nav>
       <SidebarFooter />
     </aside>
