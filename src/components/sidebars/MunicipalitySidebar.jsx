@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  HomeIcon, BuildingOffice2Icon, TruckIcon, CloudIcon, ChartBarIcon,
+  HomeIcon, BuildingOffice2Icon, TruckIcon, CloudIcon, ChartBarIcon, VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
@@ -13,6 +13,7 @@ const navItems = [
   { label: 'Supply Vehicles', to: '/municipality/supply', icon: TruckIcon },
   { label: 'Weather', to: '/municipality/weather', icon: CloudIcon },
   { label: 'AI Forecast', to: '/municipality/forecast', icon: ChartBarIcon },
+  { label: 'Wari Live', to: '/wari-live', icon: VideoCameraIcon },
 ];
 
 export default function MunicipalitySidebar() {

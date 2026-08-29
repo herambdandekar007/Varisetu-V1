@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   ClipboardDocumentListIcon, HeartIcon, HomeIcon, MapPinIcon, UserIcon, UserGroupIcon,
-  ExclamationTriangleIcon, ClipboardDocumentCheckIcon, TruckIcon,
+  ExclamationTriangleIcon, ClipboardDocumentCheckIcon, TruckIcon, VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
@@ -14,6 +14,7 @@ const fieldItems = [
   { label: 'Nearby Pilgrims', to: '/volunteer/pilgrims', icon: UserGroupIcon },
   { label: 'Emergency Requests', to: '/volunteer/requests', icon: ExclamationTriangleIcon },
   { label: 'Ambulance Status', to: '/ambulance/status', icon: TruckIcon },
+  { label: 'Wari Live', to: '/wari-live', icon: VideoCameraIcon },
 ];
 
 const accountItems = [

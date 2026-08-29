@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   HomeIcon, HeartIcon, UserGroupIcon, TruckIcon,
-  BuildingOffice2Icon, BeakerIcon, PlusCircleIcon, UserPlusIcon,
+  BuildingOffice2Icon, BeakerIcon, PlusCircleIcon, UserPlusIcon, VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
@@ -17,6 +17,7 @@ const navItems = [
   { label: 'Medical Camps', to: '/medical/camps', icon: BuildingOffice2Icon },
   { label: 'Medicine Stock', to: '/medical/medicine', icon: BeakerIcon },
   { label: 'Manage Medicines', to: '/medical/manage-medicine', icon: PlusCircleIcon },
+  { label: 'Wari Live', to: '/wari-live', icon: VideoCameraIcon },
 ];
 
 export default function MedicalSidebar() {

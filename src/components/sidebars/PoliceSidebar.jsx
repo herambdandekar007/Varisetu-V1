@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   HomeIcon, ShieldExclamationIcon, MapIcon, PhoneIcon,
   BoltIcon, ExclamationTriangleIcon, SignalIcon, UsersIcon, HeartIcon,
-  ArrowPathIcon, MagnifyingGlassIcon,
+  ArrowPathIcon, MagnifyingGlassIcon, VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import SidebarFooter from './SidebarFooter';
@@ -12,6 +12,7 @@ import SidebarFooter from './SidebarFooter';
 const overviewItems = [
   { label: 'Command Center', to: '/controller/dashboard', icon: HomeIcon },
   { label: 'Live Map', to: '/crowd', icon: MapIcon },
+  { label: 'Wari Live', to: '/wari-live', icon: VideoCameraIcon },
 ];
 
 const crowdItems = [

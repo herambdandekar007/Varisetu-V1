@@ -17,7 +17,8 @@
     "admin": "प्रशासन कन्सोल",
     "volunteer": "स्वयंसेवक डेस्क",
     "accessibility": "सुलभता",
-    "accessibilityDesc": "मोठे अक्षर, मजबूत कॉन्ट्रास्ट आणि सोपे दृश्य."
+    "accessibilityDesc": "मोठे अक्षर, मजबूत कॉन्ट्रास्ट आणि सोपे दृश्य.",
+    "wariLive": "वारी लाइव्ह"
   },
   "topbar": {
     "searchPlaceholder": "ठिकाणे, शिबिरे, संसाधने शोधा...",

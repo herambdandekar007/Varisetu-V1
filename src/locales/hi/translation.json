@@ -17,7 +17,8 @@
     "admin": "प्रशासन कंसोल",
     "volunteer": "स्वयंसेवक डेस्क",
     "accessibility": "सुगमता",
-    "accessibilityDesc": "बड़ा टेक्स्ट, मजबूत कंट्रास्ट और सरल दृश्य।"
+    "accessibilityDesc": "बड़ा टेक्स्ट, मजबूत कंट्रास्ट और सरल दृश्य।",
+    "wariLive": "वारी लाइव"
   },
   "topbar": {
     "searchPlaceholder": "शिविर, जल स्रोत, संसाधन खोजें...",
