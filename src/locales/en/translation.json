@@ -17,7 +17,8 @@
     "admin": "Admin Console",
     "volunteer": "Volunteer Desk",
     "accessibility": "Accessibility",
-    "accessibilityDesc": "Larger text, stronger contrast and a simpler view."
+    "accessibilityDesc": "Larger text, stronger contrast and a simpler view.",
+    "wariLive": "Wari Live"
   },
   "topbar": {
     "searchPlaceholder": "Search camps, water points, resources...",

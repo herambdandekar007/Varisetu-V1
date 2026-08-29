@@ -5,7 +5,7 @@ import {
   ChartBarIcon, HomeIcon, MapIcon, ShieldExclamationIcon,
   UserGroupIcon, UserIcon, WrenchScrewdriverIcon, HeartIcon,
   MagnifyingGlassIcon, BuildingOffice2Icon, HomeModernIcon,
-  BellIcon,
+  BellIcon, VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 import { useApp } from '../../context/AppContext';
@@ -14,6 +14,7 @@ import SidebarFooter from './SidebarFooter';
 const journeyItems = [
   { name: 'Crowd Watch', to: '/crowd', icon: UserGroupIcon },
   { name: 'Smart Route', to: '/navigation', icon: MapIcon },
+  { name: 'Wari Live', to: '/wari-live', icon: VideoCameraIcon },
 ];
 
 const servicesItems = [

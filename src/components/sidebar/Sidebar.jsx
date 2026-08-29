@@ -11,6 +11,7 @@ import {
   UserGroupIcon,
   UserIcon,
   WrenchScrewdriverIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '../../utils/format';
 
@@ -20,6 +21,7 @@ const primaryNavigation = [
   { nameKey: 'nav.navigation', to: '/navigation', icon: MapIcon },
   { nameKey: 'nav.resources', to: '/resources', icon: WrenchScrewdriverIcon },
   { nameKey: 'nav.tracking', to: '/tracking', icon: UserIcon },
+  { nameKey: 'nav.wariLive', to: '/wari-live', icon: VideoCameraIcon },
 ];
 
 const controlNavigation = [

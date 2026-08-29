@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   HomeIcon, MapIcon, UserGroupIcon, WrenchScrewdriverIcon,
   ClipboardDocumentCheckIcon, PhoneIcon, HeartIcon, BuildingStorefrontIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils/format';
@@ -14,30 +15,35 @@ const navByRole = {
     { nameKey: 'nav.crowd', to: '/crowd', icon: UserGroupIcon },
     { nameKey: 'nav.navigation', to: '/navigation', icon: MapIcon },
     { nameKey: 'nav.resources', to: '/resources', icon: WrenchScrewdriverIcon },
+    { nameKey: 'nav.wariLive', to: '/wari-live', icon: VideoCameraIcon },
   ],
   volunteer: [
     { nameKey: 'nav.dashboard', to: '/volunteer/dashboard', icon: HomeIcon },
     { nameKey: 'nav.tasks', to: '/volunteer/tasks', icon: ClipboardDocumentCheckIcon },
     { nameKey: 'nav.crowd', to: '/crowd', icon: UserGroupIcon },
     { nameKey: 'nav.emergency', to: '/volunteer/requests', icon: PhoneIcon },
+    { nameKey: 'nav.wariLive', to: '/wari-live', icon: VideoCameraIcon },
   ],
   police: [
     { nameKey: 'nav.dashboard', to: '/controller/dashboard', icon: HomeIcon },
     { nameKey: 'nav.crowd', to: '/crowd', icon: UserGroupIcon },
     { nameKey: 'nav.emergency', to: '/controller/emergency', icon: PhoneIcon },
     { nameKey: 'nav.patrols', to: '/controller/patrols', icon: UserGroupIcon },
+    { nameKey: 'nav.wariLive', to: '/wari-live', icon: VideoCameraIcon },
   ],
   medical: [
     { nameKey: 'nav.dashboard', to: '/medical/dashboard', icon: HomeIcon },
     { nameKey: 'nav.cases', to: '/medical/cases', icon: HeartIcon },
     { nameKey: 'nav.camps', to: '/medical/camps', icon: WrenchScrewdriverIcon },
     { nameKey: 'nav.ambulances', to: '/medical/ambulances', icon: PhoneIcon },
+    { nameKey: 'nav.wariLive', to: '/wari-live', icon: VideoCameraIcon },
   ],
   municipality: [
     { nameKey: 'nav.dashboard', to: '/municipality/dashboard', icon: HomeIcon },
     { nameKey: 'nav.resources', to: '/municipality/resources', icon: BuildingStorefrontIcon },
     { nameKey: 'nav.weather', to: '/municipality/weather', icon: WrenchScrewdriverIcon },
     { nameKey: 'nav.crowd', to: '/crowd', icon: UserGroupIcon },
+    { nameKey: 'nav.wariLive', to: '/wari-live', icon: VideoCameraIcon },
   ],
 };
 

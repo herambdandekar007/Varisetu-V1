@@ -39,6 +39,7 @@ import WeatherPage from './pages/Municipality/WeatherPage';
 import ForecastPage from './pages/Municipality/ForecastPage';
 
 const LandingPage = lazy(() => import('./pages/Landing/LandingPage'));
+const WariLivePage = lazy(() => import('./pages/WariLive/WariLivePage'));
 const DashboardPage = lazy(() => import('./pages/Dashboard/DashboardPage'));
 const CrowdPage = lazy(() => import('./pages/Crowd/CrowdPage'));
 const NavigationPage = lazy(() => import('./pages/Navigation/NavigationPage'));
@@ -67,6 +68,7 @@ export default function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LazyPage Component={LandingPage} />} />
+      <Route path="/wari-live" element={<LazyPage Component={WariLivePage} />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
