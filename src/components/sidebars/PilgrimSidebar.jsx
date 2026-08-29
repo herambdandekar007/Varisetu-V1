@@ -12,26 +12,26 @@ import { useApp } from '../../context/AppContext';
 import SidebarFooter from './SidebarFooter';
 
 const journeyItems = [
-  { name: 'Crowd Watch', to: '/crowd', icon: UserGroupIcon },
-  { name: 'Smart Route', to: '/navigation', icon: MapIcon },
+  { labelKey: 'nav.crowd', to: '/crowd', icon: UserGroupIcon },
+  { labelKey: 'nav.navigation', to: '/navigation', icon: MapIcon },
 ];
 
 const servicesItems = [
-  { name: 'Resources', to: '/resources', icon: WrenchScrewdriverIcon },
-  { name: 'Health Check', to: '/health', icon: HeartIcon },
-  { name: 'Places to Stay', to: '/stay', icon: HomeModernIcon },
-  { name: 'Medical Camps', to: '/emergency', icon: BuildingOffice2Icon },
-  { name: 'My Group', to: '/group', icon: UserGroupIcon },
-  { name: 'Family & Palkhi', to: '/tracking', icon: UserIcon },
+  { labelKey: 'sidebar.resources', to: '/resources', icon: WrenchScrewdriverIcon },
+  { labelKey: 'sidebar.healthCheck', to: '/health', icon: HeartIcon },
+  { labelKey: 'sidebar.placesToStay', to: '/stay', icon: HomeModernIcon },
+  { labelKey: 'sidebar.medicalCamps', to: '/emergency', icon: BuildingOffice2Icon },
+  { labelKey: 'sidebar.myGroup', to: '/group', icon: UserGroupIcon },
+  { labelKey: 'sidebar.familyAndPalkhi', to: '/tracking', icon: UserIcon },
 ];
 
 const safetyItems = [
-  { name: 'Alerts', to: '/alerts', icon: BellIcon },
-  { name: 'Emergency Center', to: '/emergency', icon: ShieldExclamationIcon },
+  { labelKey: 'sidebar.alerts', to: '/alerts', icon: BellIcon },
+  { labelKey: 'nav.emergency', to: '/emergency', icon: ShieldExclamationIcon },
 ];
 
 const ambulanceItems = [
-  { name: 'Ambulance Status', to: '/ambulance/status', icon: TruckIcon },
+  { labelKey: 'sidebar.ambulanceStatus', to: '/ambulance/status', icon: TruckIcon },
 ];
 
 export default function PilgrimSidebar() {
@@ -47,7 +47,7 @@ export default function PilgrimSidebar() {
             <>
               {isActive && <motion.span layoutId={layoutId} className="absolute inset-0 rounded-xl bg-saffron-50" transition={{ type: 'spring', stiffness: 380, damping: 30 }} />}
               <item.icon className="relative z-10 h-5 w-5" />
-              <span className="relative z-10">{item.name}</span>
+              <span className="relative z-10">{t(item.labelKey)}</span>
               {((item.to === '/emergency') || (item.to === '/group' && groupSeparationActive)) && (
                 <span className="relative z-10 ml-auto h-2 w-2 rounded-full bg-red-500" />
               )}
@@ -72,22 +72,22 @@ export default function PilgrimSidebar() {
 
       <nav className="mt-10 space-y-1">
         <div className="mb-2">
-          <p className="label px-3 pb-2">My Journey</p>
+          <p className="label px-3 pb-2">{t('sidebar.myJourney')}</p>
           <NavLink to="/dashboard" className={({ isActive }) => cn('group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-saffron-200 focus-visible:ring-offset-2 mt-1', isActive ? 'bg-saffron-50 text-saffron' : 'text-slate-500 hover:bg-slate-50 hover:text-ink')}>
             {({ isActive }) => (
               <>
                 {isActive && <motion.span layoutId="pilgrim-dashboard" className="absolute inset-0 rounded-xl bg-saffron-50" transition={{ type: 'spring', stiffness: 380, damping: 30 }} />}
                 <HomeIcon className="relative z-10 h-5 w-5" />
-                <span className="relative z-10">Dashboard</span>
+                <span className="relative z-10">{t('nav.dashboard')}</span>
               </>
             )}
           </NavLink>
         </div>
 
-        {renderGroup('Journey', journeyItems, 'pilgrim-journey')}
-        {renderGroup('Ambulance', ambulanceItems, 'pilgrim-ambulance')}
-        {renderGroup('Services & Camps', servicesItems, 'pilgrim-services')}
-        {renderGroup('Safety Center', safetyItems, 'pilgrim-safety')}
+        {renderGroup(t('sidebar.journey'), journeyItems, 'pilgrim-journey')}
+        {renderGroup(t('sidebar.ambulance'), ambulanceItems, 'pilgrim-ambulance')}
+        {renderGroup(t('sidebar.servicesAndCamps'), servicesItems, 'pilgrim-services')}
+        {renderGroup(t('sidebar.safetyCenter'), safetyItems, 'pilgrim-safety')}
       </nav>
 
       <SidebarFooter />

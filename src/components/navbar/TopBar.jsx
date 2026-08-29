@@ -6,13 +6,13 @@ import { cn } from '../../utils/format';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import ProfileMenu from '../common/ProfileMenu';
 
-const roleBadgeLabels = {
-  pilgrim: 'Pilgrim',
-  volunteer: 'Volunteer',
-  medical: 'Medical',
-  police: 'Controller',
-  municipality: 'Municipality',
-  ambulance_driver: 'Ambulance Driver',
+const roleBadgeLabelKeys = {
+  pilgrim: 'topbar.pilgrim',
+  volunteer: 'topbar.volunteer',
+  medical: 'topbar.medical',
+  police: 'topbar.controller',
+  municipality: 'topbar.municipality',
+  ambulance_driver: 'topbar.ambulanceDriver',
 };
 
 const roleBadgeColors = {
@@ -29,7 +29,7 @@ export default function TopBar() {
   const { setIsNotificationOpen } = useApp();
   const { role } = useAuth();
   const roleId = role || 'pilgrim';
-  const roleLabel = roleBadgeLabels[roleId] || 'Pilgrim';
+  const roleLabel = t(roleBadgeLabelKeys[roleId] || 'topbar.pilgrim');
 
   return (
     <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between gap-3 border-b border-slate-100 bg-cloud/90 px-4 backdrop-blur-xl shadow-topbar sm:px-6 lg:px-8">
